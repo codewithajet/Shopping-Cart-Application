@@ -1,19 +1,19 @@
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
   Alert,
   Animated,
   Dimensions,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import CartItem from './CartItem';
+import CartItem from '../../components/CartItem';
 
-interface CartItem {
+interface CartItemType {
   id: number;
   name: string;
   price: number;
@@ -25,16 +25,22 @@ interface CartItem {
 }
 
 interface CartProps {
-  items: CartItem[];
-  onAddItem: (item: CartItem) => void;
-  onRemoveItem: (itemId: number) => void;
-  total: number;
-  onClose: () => void;
+  items?: CartItemType[];
+  onAddItem?: (item: CartItemType) => void;
+  onRemoveItem?: (itemId: number) => void;
+  total?: number;
+  onClose?: () => void;
 }
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-const Cart: React.FC<CartProps> = ({ items, onAddItem, onRemoveItem, total, onClose }) => {
+const Cart: React.FC<CartProps> = ({ 
+  items = [], 
+  onAddItem, 
+  onRemoveItem, 
+  total = 0, 
+  onClose 
+}) => {
   const slideAnim = React.useRef(new Animated.Value(width)).current;
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -52,7 +58,7 @@ const Cart: React.FC<CartProps> = ({ items, onAddItem, onRemoveItem, total, onCl
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [slideAnim, fadeAnim]);
 
   const handleCheckout = () => {
     if (items.length === 0) {
@@ -76,7 +82,7 @@ const Cart: React.FC<CartProps> = ({ items, onAddItem, onRemoveItem, total, onCl
             Alert.alert(
               '✅ Order Confirmed!', 
               'Thank you for your purchase! Your order will be delivered within 2-3 business days.',
-              [{ text: 'Amazing!', onPress: onClose }]
+              [{ text: 'Amazing!', onPress: () => onClose?.() }]
             );
           }
         },
@@ -96,18 +102,18 @@ const Cart: React.FC<CartProps> = ({ items, onAddItem, onRemoveItem, total, onCl
         duration: 250,
         useNativeDriver: true,
       }),
-    ]).start(() => onClose());
+    ]).start(() => onClose?.());
   };
 
-  const handleIncrease = (item: CartItem) => {
-    onAddItem(item);
+  const handleIncrease = (item: CartItemType) => {
+    onAddItem?.(item);
   };
 
   const handleDecrease = (itemId: number) => {
-    onRemoveItem(itemId);
+    onRemoveItem?.(itemId);
   };
 
-  const renderCartItem = ({ item, index }: { item: CartItem; index: number }) => (
+  const renderCartItem = ({ item }: { item: CartItemType }) => (
     <Animated.View
       style={[
         styles.cartItemWrapper,

@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
-import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import ProductList from '../../components/ProductList';
-import Cart from '../../components/Cart';
+import React, { useMemo, useState } from 'react';
+import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
 import Header from '../../components/Header';
 import Navbar from '../../components/Navbar';
+import ProductList from '../../components/ProductList';
+import Cart from '../(tabs)/Cart';
 
 // Define interfaces for our data types
 export interface Product {

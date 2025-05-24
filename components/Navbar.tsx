@@ -8,7 +8,7 @@ import {
   ScrollView,
   Modal,
   Dimensions,
-  Animated,
+  SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -45,22 +45,22 @@ const Navbar: React.FC<NavbarProps> = ({
   const [searchFocused, setSearchFocused] = useState<boolean>(false);
 
   const sortOptions = [
-    { value: 'name', label: 'Name A-Z', icon: 'text-outline' as const },
-    { value: 'price-low', label: 'Price: Low to High', icon: 'arrow-up-outline' as const },
-    { value: 'price-high', label: 'Price: High to Low', icon: 'arrow-down-outline' as const },
-    { value: 'rating', label: 'Rating', icon: 'star-outline' as const },
+    { value: 'name' as const, label: 'Name A-Z', icon: 'text-outline' as any },
+    { value: 'price-low' as const, label: 'Price: Low to High', icon: 'arrow-up-outline' as any },
+    { value: 'price-high' as const, label: 'Price: High to Low', icon: 'arrow-down-outline' as any },
+    { value: 'rating' as const, label: 'Rating', icon: 'star-outline' as any },
   ];
 
   const priceRanges = [
-    { min: 0, max: 50, label: 'Under $50', icon: 'cash-outline' as const },
-    { min: 50, max: 100, label: '$50 - $100', icon: 'card-outline' as const },
-    { min: 100, max: 500, label: '$100 - $500', icon: 'wallet-outline' as const },
-    { min: 500, max: 1000, label: '$500 - $1000', icon: 'diamond-outline' as const },
-    { min: 1000, max: 2000, label: 'Over $1000', icon: 'trophy-outline' as const },
-    { min: 0, max: 2000, label: 'All Prices', icon: 'infinite-outline' as const },
+    { min: 0, max: 50, label: 'Under $50', icon: 'cash-outline' as any },
+    { min: 50, max: 100, label: '$50 - $100', icon: 'card-outline' as any },
+    { min: 100, max: 500, label: '$100 - $500', icon: 'wallet-outline' as any },
+    { min: 500, max: 1000, label: '$500 - $1000', icon: 'diamond-outline' as any },
+    { min: 1000, max: 2000, label: 'Over $1000', icon: 'trophy-outline' as any },
+    { min: 0, max: 2000, label: 'All Prices', icon: 'infinite-outline' as any },
   ];
 
-  const categoryIcons: { [key: string]: keyof typeof Ionicons.glyphMap } = {
+  const categoryIcons: { [key: string]: any } = {
     'All': 'apps-outline',
     'Electronics': 'phone-portrait-outline',
     'Fashion': 'shirt-outline',
@@ -87,22 +87,22 @@ const Navbar: React.FC<NavbarProps> = ({
 
   const hasActiveFilters = () => {
     return filters.category !== 'All' || 
-           filters.priceRange.min !== 0 || 
-           filters.priceRange.max !== 2000 || 
-           filters.sortBy !== 'name';
+          filters.priceRange.min !== 0 || 
+          filters.priceRange.max !== 2000 || 
+          filters.sortBy !== 'name';
   };
 
   return (
     <>
       {/* Main Navbar */}
       <LinearGradient
-        colors={colors.cardGradient as [string, string]}
+        colors={colors.cardGradient}
         style={styles.navbar}
       >
         {/* Search Bar */}
         <View style={[styles.searchContainer, searchFocused && styles.searchContainerFocused]}>
           <LinearGradient
-            colors={searchFocused ? (colors.accentGradient as [string, string]) : (['#f8fafc', '#e2e8f0'] as [string, string])}
+            colors={searchFocused ? colors.accentGradient : ['#f8fafc', '#e2e8f0']}
             style={styles.searchGradient}
           >
             <Ionicons 
@@ -134,7 +134,7 @@ const Navbar: React.FC<NavbarProps> = ({
           onPress={() => setShowFilters(true)}
         >
           <LinearGradient
-            colors={hasActiveFilters() ? (colors.secondaryGradient as [string, string]) : (colors.buttonGradient as [string, string])}
+            colors={hasActiveFilters() ? colors.secondaryGradient : colors.buttonGradient}
             style={styles.filterButton}
           >
             <Ionicons 
@@ -145,7 +145,7 @@ const Navbar: React.FC<NavbarProps> = ({
             {hasActiveFilters() && (
               <View style={styles.filterIndicator}>
                 <LinearGradient
-                  colors={colors.accentGradient as [string, string]}
+                  colors={colors.accentGradient}
                   style={styles.filterIndicatorGradient}
                 />
               </View>
@@ -156,7 +156,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
       {/* Enhanced Category Filter */}
       <LinearGradient
-        colors={['rgba(255,255,255,0.95)', 'rgba(248,250,252,0.95)'] as [string, string]}
+        colors={['rgba(255,255,255,0.95)', 'rgba(248,250,252,0.95)']}
         style={styles.categorySection}
       >
         <ScrollView 
@@ -172,7 +172,7 @@ const Navbar: React.FC<NavbarProps> = ({
               onPress={() => onFiltersChange({ ...filters, category })}
             >
               <LinearGradient
-                colors={filters.category === category ? (colors.buttonGradient as [string, string]) : (['#ffffff', '#f1f5f9'] as [string, string])}
+                colors={filters.category === category ? colors.buttonGradient : ['#ffffff', '#f1f5f9']}
                 style={[styles.categoryChip, filters.category === category && styles.categoryChipActive]}
               >
                 <Ionicons
@@ -199,194 +199,209 @@ const Navbar: React.FC<NavbarProps> = ({
         animationType="slide"
         transparent={true}
         onRequestClose={() => setShowFilters(false)}
+        statusBarTranslucent={true}
       >
-        <BlurView intensity={20} style={styles.modalOverlay}>
-          <LinearGradient
-            colors={colors.cardGradient as [string, string]}
-            style={styles.modalContent}
-          >
-            {/* Modal Header */}
+        <SafeAreaView style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
             <LinearGradient
-              colors={colors.buttonGradient as [string, string]}
-              style={styles.modalHeader}
+              colors={colors.cardGradient}
+              style={styles.modalContent}
             >
-              <Text style={styles.modalTitle}>🎯 Filters & Sorting</Text>
-              <TouchableOpacity 
-                onPress={() => setShowFilters(false)}
-                style={styles.closeButton}
+              {/* Modal Header */}
+              <LinearGradient
+                colors={colors.buttonGradient}
+                style={styles.modalHeader}
               >
-                <Ionicons name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </LinearGradient>
+                <Text style={styles.modalTitle}>🎯 Filters & Sorting</Text>
+                <TouchableOpacity 
+                  onPress={() => setShowFilters(false)}
+                  style={styles.closeButton}
+                >
+                  <Ionicons name="close" size={24} color="white" />
+                </TouchableOpacity>
+              </LinearGradient>
 
-            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-              {/* Sort By Section */}
-              <View style={styles.filterSection}>
-                <Text style={styles.sectionTitle}>
-                  <Ionicons name="swap-vertical-outline" size={20} color={colors.primary} /> Sort By
-                </Text>
-                {sortOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={styles.optionRow}
-                    onPress={() => setTempFilters({ ...tempFilters, sortBy: option.value as any })}
-                  >
-                    <LinearGradient
-                      colors={tempFilters.sortBy === option.value ? (colors.accentGradient as [string, string]) : (['transparent', 'transparent'] as [string, string])}
-                      style={styles.optionGradient}
-                    >
-                      <View style={styles.optionContent}>
-                        <Ionicons
-                          name={option.icon}
-                          size={20}
-                          color={tempFilters.sortBy === option.value ? 'white' : colors.primary}
-                          style={styles.optionIcon}
-                        />
-                        <Text style={[
-                          styles.optionText,
-                          tempFilters.sortBy === option.value && styles.optionTextActive
+              {/* Modal Body with ScrollView */}
+              <ScrollView 
+                style={styles.modalBody} 
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+                contentContainerStyle={styles.modalBodyContent}
+              >
+                {/* Sort By Section */}
+                <View style={styles.filterSection}>
+                  <View style={styles.sectionTitleContainer}>
+                    <Ionicons name="swap-vertical-outline" size={20} color={colors.primary} />
+                    <Text style={styles.sectionTitle}>Sort By</Text>
+                  </View>
+                  <View style={styles.optionsContainer}>
+                    {sortOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={styles.optionRow}
+                        onPress={() => setTempFilters({ ...tempFilters, sortBy: option.value as FilterOptions['sortBy'] })}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[
+                          styles.optionContent,
+                          tempFilters.sortBy === option.value && styles.optionContentActive
                         ]}>
-                          {option.label}
-                        </Text>
-                      </View>
-                      <Ionicons
-                        name={tempFilters.sortBy === option.value ? "checkmark-circle" : "ellipse-outline"}
-                        size={24}
-                        color={tempFilters.sortBy === option.value ? 'white' : colors.textLight}
-                      />
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                          <View style={styles.optionLeft}>
+                            <Ionicons
+                              name={option.icon}
+                              size={20}
+                              color={tempFilters.sortBy === option.value ? 'white' : colors.primary}
+                              style={styles.optionIcon}
+                            />
+                            <Text style={[
+                              styles.optionText,
+                              tempFilters.sortBy === option.value && styles.optionTextActive
+                            ]}>
+                              {option.label}
+                            </Text>
+                          </View>
+                          <Ionicons
+                            name={tempFilters.sortBy === option.value ? "checkmark-circle" : "ellipse-outline"}
+                            size={24}
+                            color={tempFilters.sortBy === option.value ? 'white' : colors.textLight}
+                          />
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
 
-              {/* Category Section */}
-              <View style={styles.filterSection}>
-                <Text style={styles.sectionTitle}>
-                  <Ionicons name="grid-outline" size={20} color={colors.primary} /> Category
-                </Text>
-                {categories.map((category) => (
-                  <TouchableOpacity
-                    key={category}
-                    style={styles.optionRow}
-                    onPress={() => setTempFilters({ ...tempFilters, category })}
-                  >
-                    <LinearGradient
-                      colors={tempFilters.category === category ? (colors.secondaryGradient as [string, string]) : (['transparent', 'transparent'] as [string, string])}
-                      style={styles.optionGradient}
-                    >
-                      <View style={styles.optionContent}>
-                        <Ionicons
-                          name={categoryIcons[category] || 'cube-outline'}
-                          size={20}
-                          color={tempFilters.category === category ? 'white' : colors.primary}
-                          style={styles.optionIcon}
-                        />
-                        <Text style={[
-                          styles.optionText,
-                          tempFilters.category === category && styles.optionTextActive
+                {/* Category Section */}
+                <View style={styles.filterSection}>
+                  <View style={styles.sectionTitleContainer}>
+                    <Ionicons name="grid-outline" size={20} color={colors.primary} />
+                    <Text style={styles.sectionTitle}>Category</Text>
+                  </View>
+                  <View style={styles.optionsContainer}>
+                    {categories.map((category) => (
+                      <TouchableOpacity
+                        key={category}
+                        style={styles.optionRow}
+                        onPress={() => setTempFilters({ ...tempFilters, category })}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[
+                          styles.optionContent,
+                          tempFilters.category === category && styles.optionContentActiveSecondary
                         ]}>
-                          {category}
-                        </Text>
-                      </View>
-                      <Ionicons
-                        name={tempFilters.category === category ? "checkmark-circle" : "ellipse-outline"}
-                        size={24}
-                        color={tempFilters.category === category ? 'white' : colors.textLight}
-                      />
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                          <View style={styles.optionLeft}>
+                            <Ionicons
+                              name={categoryIcons[category] || 'cube-outline'}
+                              size={20}
+                              color={tempFilters.category === category ? 'white' : colors.primary}
+                              style={styles.optionIcon}
+                            />
+                            <Text style={[
+                              styles.optionText,
+                              tempFilters.category === category && styles.optionTextActive
+                            ]}>
+                              {category}
+                            </Text>
+                          </View>
+                          <Ionicons
+                            name={tempFilters.category === category ? "checkmark-circle" : "ellipse-outline"}
+                            size={24}
+                            color={tempFilters.category === category ? 'white' : colors.textLight}
+                          />
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
 
-              {/* Price Range Section */}
-              <View style={styles.filterSection}>
-                <Text style={styles.sectionTitle}>
-                  <Ionicons name="pricetag-outline" size={20} color={colors.primary} /> Price Range
-                </Text>
-                {priceRanges.map((range) => (
-                  <TouchableOpacity
-                    key={`${range.min}-${range.max}`}
-                    style={styles.optionRow}
-                    onPress={() => setTempFilters({ 
-                      ...tempFilters, 
-                      priceRange: { min: range.min, max: range.max } 
-                    })}
-                  >
-                    <LinearGradient
-                      colors={
-                        tempFilters.priceRange.min === range.min && 
-                        tempFilters.priceRange.max === range.max 
-                          ? (colors.buttonGradient as [string, string])
-                          : (['transparent', 'transparent'] as [string, string])
-                      }
-                      style={styles.optionGradient}
-                    >
-                      <View style={styles.optionContent}>
-                        <Ionicons
-                          name={range.icon}
-                          size={20}
-                          color={
-                            tempFilters.priceRange.min === range.min && 
-                            tempFilters.priceRange.max === range.max 
-                              ? 'white' 
-                              : colors.primary
-                          }
-                          style={styles.optionIcon}
-                        />
-                        <Text style={[
-                          styles.optionText,
+                {/* Price Range Section */}
+                <View style={styles.filterSection}>
+                  <View style={styles.sectionTitleContainer}>
+                    <Ionicons name="pricetag-outline" size={20} color={colors.primary} />
+                    <Text style={styles.sectionTitle}>Price Range</Text>
+                  </View>
+                  <View style={styles.optionsContainer}>
+                    {priceRanges.map((range) => (
+                      <TouchableOpacity
+                        key={`${range.min}-${range.max}`}
+                        style={styles.optionRow}
+                        onPress={() => setTempFilters({ 
+                          ...tempFilters, 
+                          priceRange: { min: range.min, max: range.max } 
+                        })}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[
+                          styles.optionContent,
                           tempFilters.priceRange.min === range.min && 
                           tempFilters.priceRange.max === range.max && 
-                          styles.optionTextActive
+                          styles.optionContentActivePrimary
                         ]}>
-                          {range.label}
-                        </Text>
-                      </View>
-                      <Ionicons
-                        name={
-                          tempFilters.priceRange.min === range.min && 
-                          tempFilters.priceRange.max === range.max 
-                            ? "checkmark-circle" 
-                            : "ellipse-outline"
-                        }
-                        size={24}
-                        color={
-                          tempFilters.priceRange.min === range.min && 
-                          tempFilters.priceRange.max === range.max 
-                            ? 'white' 
-                            : colors.textLight
-                        }
-                      />
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
+                          <View style={styles.optionLeft}>
+                            <Ionicons
+                              name={range.icon}
+                              size={20}
+                              color={
+                                tempFilters.priceRange.min === range.min && 
+                                tempFilters.priceRange.max === range.max 
+                                  ? 'white' 
+                                  : colors.primary
+                              }
+                              style={styles.optionIcon}
+                            />
+                            <Text style={[
+                              styles.optionText,
+                              tempFilters.priceRange.min === range.min && 
+                              tempFilters.priceRange.max === range.max && 
+                              styles.optionTextActive
+                            ]}>
+                              {range.label}
+                            </Text>
+                          </View>
+                          <Ionicons
+                            name={
+                              tempFilters.priceRange.min === range.min && 
+                              tempFilters.priceRange.max === range.max 
+                                ? "checkmark-circle" 
+                                : "ellipse-outline"
+                            }
+                            size={24}
+                            color={
+                              tempFilters.priceRange.min === range.min && 
+                              tempFilters.priceRange.max === range.max 
+                                ? 'white' 
+                                : colors.textLight
+                            }
+                          />
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </ScrollView>
 
-            {/* Modal Footer */}
-            <View style={styles.modalFooter}>
-              <TouchableOpacity style={styles.resetButtonContainer} onPress={resetFilters}>
-                <LinearGradient
-                  colors={['#ffffff', '#f1f5f9'] as [string, string]}
-                  style={styles.resetButton}
-                >
-                  <Ionicons name="refresh-outline" size={18} color={colors.primary} />
-                  <Text style={styles.resetButtonText}>Reset</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.applyButtonContainer} onPress={applyFilters}>
-                <LinearGradient
-                  colors={colors.accentGradient as [string, string]}
-                  style={styles.applyButton}
-                >
-                  <Ionicons name="checkmark-outline" size={18} color="white" />
-                  <Text style={styles.applyButtonText}>Apply Filters</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </LinearGradient>
-        </BlurView>
+              {/* Modal Footer */}
+              <View style={styles.modalFooter}>
+                <TouchableOpacity style={styles.resetButtonContainer} onPress={resetFilters}>
+                  <View style={styles.resetButton}>
+                    <Ionicons name="refresh-outline" size={18} color={colors.primary} />
+                    <Text style={styles.resetButtonText}>Reset</Text>
+                  </View>
+                </TouchableOpacity>
+                
+                <TouchableOpacity style={styles.applyButtonContainer} onPress={applyFilters}>
+                  <LinearGradient
+                    colors={colors.accentGradient}
+                    style={styles.applyButton}
+                  >
+                    <Ionicons name="checkmark-outline" size={18} color="white" />
+                    <Text style={styles.applyButtonText}>Apply Filters</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </View>
+        </SafeAreaView>
       </Modal>
     </>
   );
@@ -558,12 +573,17 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContainer: {
+    flex: 1,
     justifyContent: 'flex-end',
   },
   modalContent: {
     borderTopLeftRadius: colors.borderRadiusLarge,
     borderTopRightRadius: colors.borderRadiusLarge,
     maxHeight: height * 0.85,
+    minHeight: height * 0.6,
     overflow: 'hidden',
   },
   modalHeader: {
@@ -585,34 +605,63 @@ const styles = StyleSheet.create({
   },
   modalBody: {
     flex: 1,
+  },
+  modalBodyContent: {
     paddingHorizontal: colors.spacingLg,
     paddingTop: colors.spacingLg,
+    paddingBottom: colors.spacingXl,
   },
   filterSection: {
     marginBottom: colors.spacingXl,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderRadius: colors.borderRadius,
+    padding: colors.spacingMd,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: colors.spacingMd,
+    paddingBottom: colors.spacingSm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderColor,
   },
   sectionTitle: {
     fontSize: colors.fontSizeLg,
     fontWeight: colors.fontWeightBold,
     color: colors.textDark,
-    marginBottom: colors.spacingLg,
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginLeft: colors.spacingSm,
+  },
+  optionsContainer: {
+    gap: colors.spacingSm,
   },
   optionRow: {
-    marginBottom: colors.spacingSm,
     borderRadius: colors.borderRadius,
     overflow: 'hidden',
   },
-  optionGradient: {
+  optionContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: colors.spacingMd,
     paddingVertical: colors.spacingMd,
     borderRadius: colors.borderRadius,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: colors.borderColor,
   },
-  optionContent: {
+  optionContentActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  optionContentActiveSecondary: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.secondary,
+  },
+  optionContentActivePrimary: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  optionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
@@ -630,18 +679,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: colors.fontWeightBold,
   },
-  
   modalFooter: {
     flexDirection: 'row',
     paddingHorizontal: colors.spacingLg,
     paddingVertical: colors.spacingLg,
-    backgroundColor: 'rgba(248,250,252,0.5)',
+    backgroundColor: 'rgba(248,250,252,0.95)',
+    borderTopWidth: 1,
+    borderTopColor: colors.borderColor,
   },
   resetButtonContainer: {
     flex: 1,
     marginRight: colors.spacingSm,
-    borderRadius: colors.borderRadius,
-    overflow: 'hidden',
   },
   resetButton: {
     flexDirection: 'row',
@@ -651,6 +699,7 @@ const styles = StyleSheet.create({
     borderRadius: colors.borderRadius,
     borderWidth: 2,
     borderColor: colors.primary,
+    backgroundColor: 'white',
   },
   resetButtonText: {
     color: colors.primary,

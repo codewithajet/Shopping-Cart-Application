@@ -91,10 +91,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={theme}>
       <GradientBackground>
+        {/* Fixed StatusBar - removed backgroundColor and translucent conflict */}
         <StatusBar 
           style={colorScheme === 'dark' ? 'light' : 'dark'} 
-          backgroundColor="transparent"
-          translucent
         />
         <Stack
           screenOptions={{
@@ -106,21 +105,17 @@ export default function RootLayout() {
             gestureDirection: 'horizontal',
           }}
         >
-          <Stack.Screen 
-            name="index" 
-            options={{
-              title: 'Home',
-              headerShown: false,
-            }} 
-          />
+          {/* Main tabs navigation */}
           <Stack.Screen 
             name="(tabs)" 
             options={{
               headerShown: false,
             }} 
           />
+          
+          {/* Modal/Stack screens that should be outside tabs */}
           <Stack.Screen 
-            name="product/[id]" 
+            name="product/ProductDetails" 
             options={{
               title: 'Product Details',
               headerShown: true,
@@ -134,40 +129,10 @@ export default function RootLayout() {
               headerStyle: {
                 backgroundColor: 'rgba(255, 255, 255, 0.9)',
               },
+              presentation: 'modal',
             }} 
           />
-          <Stack.Screen 
-            name="cart" 
-            options={{
-              title: 'Shopping Cart',
-              headerShown: true,
-              headerTransparent: true,
-              headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
-              headerTitleStyle: {
-                fontFamily: 'Poppins-SemiBold',
-                fontSize: 18,
-              },
-              headerStyle: {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              },
-            }} 
-          />
-          <Stack.Screen 
-            name="profile" 
-            options={{
-              title: 'Profile',
-              headerShown: true,
-              headerTransparent: true,
-              headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
-              headerTitleStyle: {
-                fontFamily: 'Poppins-SemiBold',
-                fontSize: 18,
-              },
-              headerStyle: {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              },
-            }} 
-          />
+          
           <Stack.Screen 
             name="settings" 
             options={{
@@ -176,14 +141,17 @@ export default function RootLayout() {
               headerTransparent: true,
               headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
               headerTitleStyle: {
-                fontFamily: 'Poppins-SemiBold',
+                fontFamily: 'SpaceMono',
                 fontSize: 18,
+                fontWeight: '600',
               },
               headerStyle: {
                 backgroundColor: 'rgba(255, 255, 255, 0.9)',
               },
+              presentation: 'modal',
             }} 
           />
+          
           {/* Catch-all for unmatched routes */}
           <Stack.Screen 
             name="+not-found" 
@@ -193,8 +161,9 @@ export default function RootLayout() {
               headerTransparent: true,
               headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
               headerTitleStyle: {
-                fontFamily: 'Poppins-SemiBold',
+                fontFamily: 'SpaceMono',
                 fontSize: 18,
+                fontWeight: '600',
               },
             }} 
           />
@@ -225,7 +194,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(10px)',
     // Add shadow for depth
     shadowColor: '#000',
     shadowOffset: {
