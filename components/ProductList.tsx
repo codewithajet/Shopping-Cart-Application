@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  FlatList,
   Image,
+  FlatList,
   Dimensions,
-  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,94 +19,56 @@ interface Product {
   category: string;
   description: string;
   rating: number;
+  fullDescription?: string;
+  specifications?: { [key: string]: string };
+  inStock?: boolean;
+  stockCount?: number;
+  images?: string[];
 }
 
 interface ProductListProps {
   products: Product[];
   onAddToCart: (product: Product) => void;
+  onProductPress?: (product: Product) => void; // New prop for navigation
 }
 
 const { width } = Dimensions.get('window');
-const itemWidth = (width - 48) / 2; // 2 columns with padding
+const itemWidth = (width - 48) / 2; // Account for padding and margin
 
-// Enhanced color scheme
 const colors = {
-  primary: '#3f51b5',
-  primaryLight: '#757de8',
-  primaryDark: '#002984',
-  secondary: '#ff4081',
-  secondaryLight: '#ff79b0',
-  secondaryDark: '#c60055',
-  accent: '#00bcd4',
-  accentLight: '#62efff',
-  textColor: '#2c3e50',
-  textLight: '#7f8c8d',
-  textLighter: '#bdc3c7',
-  backgroundMain: '#f8fafc',
+  primary: '#667eea',
+  primaryLight: '#764ba2',
+  secondary: '#f093fb',
+  accent: '#43e97b',
+  textColor: '#2d3748',
+  textLight: '#718096',
+  textLighter: '#a0aec0',
   backgroundCard: '#ffffff',
-  backgroundHover: '#f1f5f9',
+  backgroundHover: '#edf2f7',
   borderColor: '#e2e8f0',
-  shadowColor: 'rgba(0, 0, 0, 0.08)',
-  success: '#10b981',
+  shadowColor: 'rgba(0, 0, 0, 0.1)',
   warning: '#f59e0b',
-  borderRadius: 16,
-  borderRadiusLg: 20,
+  buttonGradient: ['#667eea', '#764ba2'] as [string, string],
+  borderRadius: 12,
+  borderRadiusLarge: 20,
   spacingXs: 4,
   spacingSm: 8,
   spacingMd: 16,
   spacingLg: 24,
-  spacingXl: 32,
-  fontSizeXs: 11,
-  fontSizeSm: 13,
-  fontSizeMd: 15,
-  fontSizeLg: 17,
-  fontSizeXl: 19,
-  fontSizeXxl: 22,
+  fontSizeXs: 12,
+  fontSizeSm: 14,
+  fontSizeMd: 16,
+  fontSizeLg: 18,
   fontWeightMedium: '500' as const,
   fontWeightSemiBold: '600' as const,
   fontWeightBold: '700' as const,
-  fontWeightExtraBold: '800' as const,
 };
 
-const ProductCard: React.FC<{ item: Product; onAddToCart: (product: Product) => void }> = ({ 
-  item, 
-  onAddToCart 
+const ProductList: React.FC<ProductListProps> = ({ 
+  products, 
+  onAddToCart, 
+  onProductPress 
 }) => {
-  const [scaleAnim] = useState(new Animated.Value(1));
-  const [addButtonScale] = useState(new Animated.Value(1));
-
-  const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.98,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const handleAddToCart = () => {
-    Animated.sequence([
-      Animated.timing(addButtonScale, {
-        toValue: 0.9,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(addButtonScale, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onAddToCart(item);
-    });
-  };
-
   const renderStars = (rating: number) => {
     const stars = [];
     const fullStars = Math.floor(rating);
@@ -135,161 +96,113 @@ const ProductCard: React.FC<{ item: Product; onAddToCart: (product: Product) => 
     return stars;
   };
 
-  const getCategoryColor = (category: string): string => {
-    const categoryColors: Record<string, string> = {
-      electronics: colors.primary,
-      clothing: colors.secondary,
-      books: colors.accent,
-      home: colors.success,
-    };
-    return categoryColors[category.toLowerCase()] || colors.primary;
-  };
-
-  return (
-    <Animated.View style={[styles.productCard, { transform: [{ scale: scaleAnim }] }]}>
-      <TouchableOpacity onPress={handlePress} activeOpacity={1}>
-        {/* Image Container with Gradient Overlay */}
+  const renderProduct = ({ item }: { item: Product }) => (
+    <TouchableOpacity 
+      style={styles.productCard} 
+      onPress={() => onProductPress?.(item)}
+      activeOpacity={0.8}
+    >
+      <LinearGradient
+        colors={['#ffffff', '#f8fafc']}
+        style={styles.cardGradient}
+      >
         <View style={styles.imageContainer}>
           <Image source={{ uri: item.image }} style={styles.productImage} />
-          
-          {/* Gradient Overlay */}
-          <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.03)']}
-            style={styles.imageGradient}
-          />
-          
-          {/* Category Badge */}
-          <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(item.category) }]}>
-            <Text style={styles.categoryText}>{item.category.toUpperCase()}</Text>
-          </View>
-          
-          {/* Favorite Button */}
-          <TouchableOpacity style={styles.favoriteButton} activeOpacity={0.8}>
-            <View style={styles.favoriteButtonInner}>
-              <Ionicons name="heart-outline" size={16} color={colors.textColor} />
-            </View>
-          </TouchableOpacity>
-          
-          {/* Rating Badge */}
-          <View style={styles.ratingBadge}>
-            <Ionicons name="star" size={10} color={colors.warning} />
-            <Text style={styles.ratingBadgeText}>{item.rating}</Text>
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryText}>{item.category}</Text>
           </View>
         </View>
         
-        {/* Product Info */}
         <View style={styles.productInfo}>
           <Text style={styles.productName} numberOfLines={2}>
             {item.name}
           </Text>
           
-          <Text style={styles.productDescription} numberOfLines={2}>
-            {item.description}
-          </Text>
-          
-          {/* Full Rating Display */}
           <View style={styles.ratingContainer}>
             <View style={styles.starsContainer}>
               {renderStars(item.rating)}
             </View>
             <Text style={styles.ratingText}>({item.rating})</Text>
-            <View style={styles.ratingDivider} />
-            <Text style={styles.stockText}>In Stock</Text>
           </View>
           
-          {/* Price and Add Button */}
+          <Text style={styles.productDescription} numberOfLines={2}>
+            {item.description}
+          </Text>
+          
           <View style={styles.priceContainer}>
-            <View style={styles.priceSection}>
-              <Text style={styles.price}>${item.price.toFixed(2)}</Text>
-              <Text style={styles.originalPrice}>${(item.price * 1.2).toFixed(2)}</Text>
-            </View>
-            
-            <Animated.View style={{ transform: [{ scale: addButtonScale }] }}>
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleAddToCart}
-                activeOpacity={0.9}
-              >
-                <LinearGradient
-                  colors={[colors.secondary, colors.secondaryDark]}
-                  style={styles.addButtonGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Ionicons name="add" size={18} color={colors.backgroundCard} />
-                </LinearGradient>
-              </TouchableOpacity>
-            </Animated.View>
+            <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+            {item.inStock && (
+              <Text style={styles.stockText}>In Stock</Text>
+            )}
           </View>
-        </View>
-      </TouchableOpacity>
-      
-      {/* Subtle Bottom Highlight */}
-      <View style={styles.cardHighlight} />
-    </Animated.View>
-  );
-};
-
-const ProductList: React.FC<ProductListProps> = ({ products, onAddToCart }) => {
-  if (products.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <View style={styles.emptyIconContainer}>
-          <LinearGradient
-            colors={[colors.primaryLight, colors.primary]}
-            style={styles.emptyIconGradient}
+          
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation(); // Prevent triggering onProductPress
+              onAddToCart(item);
+            }}
+            style={styles.addButton}
+            disabled={!item.inStock}
           >
-            <Ionicons name="search" size={48} color={colors.backgroundCard} />
-          </LinearGradient>
+            <LinearGradient
+              colors={item.inStock ? colors.buttonGradient : [colors.textLighter, colors.textLighter]}
+              style={styles.addButtonGradient}
+            >
+              <Ionicons 
+                name="cart" 
+                size={16} 
+                color="white" 
+                style={styles.cartIcon}
+              />
+              <Text style={styles.addButtonText}>
+                {item.inStock ? 'Add' : 'Out of Stock'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
-        <Text style={styles.emptyTitle}>No products found</Text>
-        <Text style={styles.emptySubtitle}>
-          Try adjusting your search or filters to find what you&apos;re looking for
-        </Text>
-      </View>
-    );
-  }
+      </LinearGradient>
+    </TouchableOpacity>
+  );
 
   return (
-    <FlatList
-      data={products}
-      renderItem={({ item }) => <ProductCard item={item} onAddToCart={onAddToCart} />}
-      keyExtractor={(item) => item.id.toString()}
-      numColumns={2}
-      contentContainerStyle={styles.container}
-      columnWrapperStyle={styles.row}
-      showsVerticalScrollIndicator={false}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-      bounces={true}
-      scrollEventThrottle={16}
-    />
+    <View style={styles.container}>
+      <FlatList
+        data={products}
+        renderItem={renderProduct}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
+        columnWrapperStyle={styles.row}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  listContainer: {
     padding: colors.spacingMd,
-    paddingBottom: colors.spacingXl,
   },
   row: {
     justifyContent: 'space-between',
-  },
-  separator: {
-    height: colors.spacingMd,
+    marginBottom: colors.spacingMd,
   },
   productCard: {
     width: itemWidth,
-    backgroundColor: colors.backgroundCard,
-    borderRadius: colors.borderRadius,
-    marginBottom: colors.spacingMd,
-    overflow: 'hidden',
-    elevation: 8,
+    borderRadius: colors.borderRadiusLarge,
+    elevation: 4,
     shadowColor: colors.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.borderColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  cardGradient: {
+    borderRadius: colors.borderRadiusLarge,
+    overflow: 'hidden',
   },
   imageContainer: {
     position: 'relative',
@@ -298,74 +211,21 @@ const styles = StyleSheet.create({
   productImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: colors.backgroundHover,
     resizeMode: 'cover',
-  },
-  imageGradient: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 40,
   },
   categoryBadge: {
     position: 'absolute',
     top: colors.spacingSm,
     left: colors.spacingSm,
+    backgroundColor: colors.primary,
     paddingHorizontal: colors.spacingSm,
     paddingVertical: colors.spacingXs,
-    borderRadius: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    borderRadius: colors.spacingXs,
   },
   categoryText: {
-    color: colors.backgroundCard,
-    fontSize: colors.fontSizeXs - 1,
-    fontWeight: colors.fontWeightBold,
-    letterSpacing: 0.5,
-  },
-  favoriteButton: {
-    position: 'absolute',
-    top: colors.spacingSm,
-    right: colors.spacingSm,
-  },
-  favoriteButtonInner: {
-    backgroundColor: colors.backgroundCard,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  ratingBadge: {
-    position: 'absolute',
-    bottom: colors.spacingSm,
-    right: colors.spacingSm,
-    backgroundColor: colors.backgroundCard,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  ratingBadgeText: {
-    fontSize: colors.fontSizeXs - 1,
+    color: 'white',
+    fontSize: colors.fontSizeXs,
     fontWeight: colors.fontWeightSemiBold,
-    color: colors.textColor,
-    marginLeft: 2,
   },
   productInfo: {
     padding: colors.spacingMd,
@@ -374,119 +234,63 @@ const styles = StyleSheet.create({
     fontSize: colors.fontSizeMd,
     fontWeight: colors.fontWeightBold,
     color: colors.textColor,
-    marginBottom: colors.spacingXs,
-    lineHeight: 20,
-  },
-  productDescription: {
-    fontSize: colors.fontSizeXs,
-    color: colors.textLight,
     marginBottom: colors.spacingSm,
-    lineHeight: 16,
+    lineHeight: 20,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: colors.spacingMd,
+    marginBottom: colors.spacingSm,
   },
   starsContainer: {
     flexDirection: 'row',
     marginRight: colors.spacingXs,
   },
   ratingText: {
-    fontSize: colors.fontSizeXs - 1,
+    fontSize: colors.fontSizeXs,
     color: colors.textLight,
     fontWeight: colors.fontWeightMedium,
   },
-  ratingDivider: {
-    width: 1,
-    height: 10,
-    backgroundColor: colors.borderColor,
-    marginHorizontal: colors.spacingXs,
-  },
-  stockText: {
-    fontSize: colors.fontSizeXs - 1,
-    color: colors.success,
-    fontWeight: colors.fontWeightSemiBold,
+  productDescription: {
+    fontSize: colors.fontSizeSm,
+    color: colors.textLight,
+    marginBottom: colors.spacingMd,
+    lineHeight: 18,
   },
   priceContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  priceSection: {
-    flex: 1,
+    marginBottom: colors.spacingMd,
   },
   price: {
     fontSize: colors.fontSizeLg,
-    fontWeight: colors.fontWeightExtraBold,
+    fontWeight: colors.fontWeightBold,
     color: colors.primary,
   },
-  originalPrice: {
+  stockText: {
     fontSize: colors.fontSizeXs,
-    color: colors.textLighter,
-    textDecorationLine: 'line-through',
-    marginTop: 1,
+    color: colors.accent,
+    fontWeight: colors.fontWeightSemiBold,
   },
   addButton: {
-    elevation: 4,
-    shadowColor: colors.secondary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    borderRadius: 20,
+    borderRadius: colors.borderRadius,
+    overflow: 'hidden',
   },
   addButtonGradient: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  cardHighlight: {
-    position: 'absolute',
-    bottom: 0,
-    left: colors.spacingMd,
-    right: colors.spacingMd,
-    height: 2,
-    backgroundColor: colors.primary,
-    opacity: 0.1,
-    borderRadius: 1,
-  },
-  emptyContainer: {
-    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: colors.spacingXl,
-    paddingVertical: colors.spacingXl * 2,
+    paddingVertical: colors.spacingSm,
+    paddingHorizontal: colors.spacingMd,
   },
-  emptyIconContainer: {
-    marginBottom: colors.spacingLg,
+  cartIcon: {
+    marginRight: colors.spacingXs,
   },
-  emptyIconGradient: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  emptyTitle: {
-    fontSize: colors.fontSizeXxl,
-    fontWeight: colors.fontWeightBold,
-    color: colors.textColor,
-    marginBottom: colors.spacingSm,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: colors.fontSizeMd,
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: 280,
+  addButtonText: {
+    color: 'white',
+    fontSize: colors.fontSizeSm,
+    fontWeight: colors.fontWeightSemiBold,
   },
 });
 

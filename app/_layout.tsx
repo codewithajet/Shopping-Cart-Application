@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { CartProvider } from '../components/CartContext'; // <-- Import the CartProvider
 
 // Enhanced custom themes with beautiful gradients and modern colors
 const CustomLightTheme = {
@@ -89,87 +90,84 @@ export default function RootLayout() {
   const GradientBackground = colorScheme === 'dark' ? DarkGradientBackground : LightGradientBackground;
 
   return (
-    <ThemeProvider value={theme}>
-      <GradientBackground>
-        {/* Fixed StatusBar - removed backgroundColor and translucent conflict */}
-        <StatusBar 
-          style={colorScheme === 'dark' ? 'light' : 'dark'} 
-        />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: 'transparent' },
-            // Enhanced stack navigator options for beautiful transitions
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-            gestureDirection: 'horizontal',
-          }}
-        >
-          {/* Main tabs navigation */}
-          <Stack.Screen 
-            name="(tabs)" 
-            options={{
+    <CartProvider>
+      <ThemeProvider value={theme}>
+        <GradientBackground>
+          {/* Fixed StatusBar - removed backgroundColor and translucent conflict */}
+          <StatusBar 
+            style={colorScheme === 'dark' ? 'light' : 'dark'} 
+          />
+          <Stack
+            screenOptions={{
               headerShown: false,
-            }} 
-          />
-          
-          {/* Modal/Stack screens that should be outside tabs */}
-          <Stack.Screen 
-            name="product/ProductDetails" 
-            options={{
-              title: 'Product Details',
-              headerShown: true,
-              headerTransparent: true,
-              headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
-              headerTitleStyle: {
-                fontFamily: 'SpaceMono',
-                fontSize: 18,
-                fontWeight: '600',
-              },
-              headerStyle: {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              },
-              presentation: 'modal',
-            }} 
-          />
-          
-          <Stack.Screen 
-            name="settings" 
-            options={{
-              title: 'Settings',
-              headerShown: true,
-              headerTransparent: true,
-              headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
-              headerTitleStyle: {
-                fontFamily: 'SpaceMono',
-                fontSize: 18,
-                fontWeight: '600',
-              },
-              headerStyle: {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              },
-              presentation: 'modal',
-            }} 
-          />
-          
-          {/* Catch-all for unmatched routes */}
-          <Stack.Screen 
-            name="+not-found" 
-            options={{
-              title: 'Page Not Found',
-              headerShown: true,
-              headerTransparent: true,
-              headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
-              headerTitleStyle: {
-                fontFamily: 'SpaceMono',
-                fontSize: 18,
-                fontWeight: '600',
-              },
-            }} 
-          />
-        </Stack>
-      </GradientBackground>
-    </ThemeProvider>
+              contentStyle: { backgroundColor: 'transparent' },
+              // Enhanced stack navigator options for beautiful transitions
+              animation: 'slide_from_right',
+              gestureEnabled: true,
+              gestureDirection: 'horizontal',
+            }}
+          >
+            {/* Main tabs navigation */}
+            <Stack.Screen 
+              name="(tabs)" 
+              options={{ headerShown: false }} 
+            />
+            <Stack.Screen
+              name="product/[id]" // <-- No leading slash!
+              options={{
+                title: 'Product Details',
+                headerShown: true,
+                headerTransparent: true,
+                headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
+                headerTitleStyle: {
+                  fontFamily: 'SpaceMono',
+                  fontSize: 18,
+                  fontWeight: '600',
+                },
+                headerStyle: {
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                },
+                presentation: 'modal',
+              }}
+            />
+            <Stack.Screen 
+              name="settings" 
+              options={{
+                title: 'Settings',
+                headerShown: true,
+                headerTransparent: true,
+                headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
+                headerTitleStyle: {
+                  fontFamily: 'SpaceMono',
+                  fontSize: 18,
+                  fontWeight: '600',
+                },
+                headerStyle: {
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                },
+                presentation: 'modal',
+              }} 
+            />
+            
+            {/* Catch-all for unmatched routes */}
+            <Stack.Screen 
+              name="+not-found" 
+              options={{
+                title: 'Page Not Found',
+                headerShown: true,
+                headerTransparent: true,
+                headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
+                headerTitleStyle: {
+                  fontFamily: 'SpaceMono',
+                  fontSize: 18,
+                  fontWeight: '600',
+                },
+              }} 
+            />
+          </Stack>
+        </GradientBackground>
+      </ThemeProvider>
+    </CartProvider>
   );
 }
 

@@ -11,7 +11,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 // Type definitions
 interface TabIconProps {
-  name: 'shop' | 'explore' | 'Cart' | 'profile';
+  name: 'shop' | 'catigories'| 'profile';
   size: number;
   color: string;
   focused: boolean;
@@ -27,8 +27,8 @@ interface TabBarIconProps {
 const TabIcon: React.FC<TabIconProps> = ({ name, size, color, focused }) => {
   const iconMap: Record<TabIconProps['name'], string> = {
     'shop': focused ? 'storefront' : 'storefront-outline',
-    'explore': focused ? 'grid' : 'grid-outline', 
-    'Cart': focused ? 'bag' : 'bag-outline',
+    'catigories': focused ? 'grid' : 'grid-outline', 
+    // 'Cart': focused ? 'bag' : 'bag-outline',
     'profile': focused ? 'person-circle' : 'person-circle-outline'
   };
   
@@ -114,7 +114,7 @@ export default function TabLayout(): React.JSX.Element {
         tabBarInactiveTintColor: currentColors.inactive,
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarBackground: GlassmorphismTabBar,
+        tabBarBackground: () => <GlassmorphismTabBar />,
         tabBarStyle: {
           position: 'absolute' as const,
           bottom: 0,
@@ -177,7 +177,7 @@ export default function TabLayout(): React.JSX.Element {
       />
       
       <Tabs.Screen
-        name="explore"
+        name="categories"
         options={{
           title: 'Categories',
           tabBarIcon: ({ color, focused }: TabBarIconProps) => (
@@ -192,7 +192,7 @@ export default function TabLayout(): React.JSX.Element {
               )}
               <TabIcon 
                 size={focused ? 26 : 22} 
-                name="explore" 
+                name="catigories" 
                 color={focused ? '#ffffff' : color}
                 focused={focused}
               />
@@ -201,7 +201,7 @@ export default function TabLayout(): React.JSX.Element {
         }}
       />
       
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="Cart"
         options={{
           title: 'Cart',
@@ -230,7 +230,7 @@ export default function TabLayout(): React.JSX.Element {
             </View>
           ),
         }}
-      />
+      /> */}
       
       <Tabs.Screen
         name="profile"

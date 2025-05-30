@@ -1,25 +1,24 @@
-
 import React from 'react';
-import { Pressable } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 
-interface HapticTabProps {
-  children: React.ReactNode;
-  onPress?: () => void;
-  [key: string]: any;
-}
-
-export function HapticTab({ children, onPress, ...props }: HapticTabProps) {
-  const handlePress = () => {
+export const HapticTab = ({ children, onPress, ...rest }: BottomTabBarButtonProps) => {
+  const handlePress = (event: any) => {
+    Haptics.selectionAsync();
     if (onPress) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      onPress();
+      onPress(event);
     }
   };
 
-  return (
-    <Pressable onPress={handlePress} {...props}>
-      {children}
-    </Pressable>
+  // Remove props that are explicitly `null`
+  const safeProps = Object.fromEntries(
+    Object.entries(rest).filter(([_, value]) => value !== null)
   );
-}
+
+  return (
+    <TouchableOpacity onPress={handlePress} {...safeProps}>
+      {children}
+    </TouchableOpacity>
+  );
+};
