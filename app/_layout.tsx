@@ -3,12 +3,13 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform, Text, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { CartProvider } from '../components/CartContext'; // <-- Import the CartProvider
+import { CartProvider } from '../components/CartContext';
 
 // Enhanced custom themes with beautiful gradients and modern colors
 const CustomLightTheme = {
@@ -66,13 +67,11 @@ const DarkGradientBackground: React.FC<{ children: React.ReactNode }> = ({ child
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  
+
   const [loaded] = useFonts({
-    // Using only available fonts - SpaceMono for beautiful UI
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // Enhanced loading screen with gradient
   if (!loaded) {
     return (
       <LinearGradient
@@ -80,7 +79,7 @@ export default function RootLayout() {
         style={styles.loadingContainer}
       >
         <View style={styles.loadingContent}>
-          {/* You can add a beautiful loading spinner or logo here */}
+          {/* Optional loading spinner or logo here */}
         </View>
       </LinearGradient>
     );
@@ -93,27 +92,22 @@ export default function RootLayout() {
     <CartProvider>
       <ThemeProvider value={theme}>
         <GradientBackground>
-          {/* Fixed StatusBar - removed backgroundColor and translucent conflict */}
-          <StatusBar 
-            style={colorScheme === 'dark' ? 'light' : 'dark'} 
-          />
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
           <Stack
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: 'transparent' },
-              // Enhanced stack navigator options for beautiful transitions
               animation: 'slide_from_right',
               gestureEnabled: true,
               gestureDirection: 'horizontal',
             }}
           >
-            {/* Main tabs navigation */}
-            <Stack.Screen 
-              name="(tabs)" 
-              options={{ headerShown: false }} 
+            <Stack.Screen
+              name="(tabs)"
+              options={{ headerShown: false }}
             />
             <Stack.Screen
-              name="product/[id]" // <-- No leading slash!
+              name="product/[id]"
               options={{
                 title: 'Product Details',
                 headerShown: true,
@@ -124,14 +118,54 @@ export default function RootLayout() {
                   fontSize: 18,
                   fontWeight: '600',
                 },
-                headerStyle: {
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                },
+                // Custom gradient header for product details, with back arrow
+                header: ({ navigation }) => (
+                  <LinearGradient
+                    colors={['#667eea', '#764ba2']}
+                    style={{
+                      flex: 1,
+                      height: Platform.OS === 'ios' ? 110 : 80,
+                      paddingTop: Platform.OS === 'ios' ? 50 : 30,
+                      paddingHorizontal: 16,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate('(tabs)')}
+                      style={{
+                        marginRight: 12,
+                        padding: 4,
+                        borderRadius: 999,
+                        backgroundColor: 'rgba(255,255,255,0.12)',
+                      }}
+                      accessibilityLabel="Go back"
+                    >
+                      <Ionicons
+                        name="arrow-back"
+                        size={26}
+                        color={colorScheme === 'dark' ? '#f1f5f9' : '#fff'}
+                      />
+                    </TouchableOpacity>
+                    <Text
+                      style={{
+                        color: colorScheme === 'dark' ? '#f1f5f9' : '#fff',
+                        fontFamily: 'SpaceMono',
+                        fontSize: 18,
+                        fontWeight: '600',
+                      }}
+                    >
+                      Product Details
+                    </Text>
+                  </LinearGradient>
+                ),
                 presentation: 'modal',
               }}
             />
-            <Stack.Screen 
-              name="settings" 
+            <Stack.Screen
+              name="settings"
               options={{
                 title: 'Settings',
                 headerShown: true,
@@ -143,15 +177,13 @@ export default function RootLayout() {
                   fontWeight: '600',
                 },
                 headerStyle: {
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  backgroundColor: '#fff',
                 },
                 presentation: 'modal',
-              }} 
+              }}
             />
-            
-            {/* Catch-all for unmatched routes */}
-            <Stack.Screen 
-              name="+not-found" 
+            <Stack.Screen
+              name="+not-found"
               options={{
                 title: 'Page Not Found',
                 headerShown: true,
@@ -162,7 +194,7 @@ export default function RootLayout() {
                   fontSize: 18,
                   fontWeight: '600',
                 },
-              }} 
+              }}
             />
           </Stack>
         </GradientBackground>
@@ -192,7 +224,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    // Add shadow for depth
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
