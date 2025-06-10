@@ -116,7 +116,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemsCount, onCartPress }) => {
       </LinearGradient>
 
       {/* Welcome section */}
-      <View style={styles.welcomeSection}>
+      {/* <View style={styles.welcomeSection}>
         <LinearGradient
           colors={[colors.backgroundCard, colors.backgroundHover]}
           style={styles.welcomeGradient}
@@ -136,7 +136,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemsCount, onCartPress }) => {
             </TouchableOpacity>
           </View>
         </LinearGradient>
-      </View>
+      </View> */}
     </>
   );
 };

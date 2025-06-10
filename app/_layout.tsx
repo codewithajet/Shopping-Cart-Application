@@ -165,6 +165,24 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="Checkout"
+              options={{
+                title: 'Checkout',
+                headerShown: true,
+                headerTransparent: true,
+                headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
+                headerTitleStyle: {
+                  fontFamily: 'SpaceMono',
+                  fontSize: 18,
+                  fontWeight: '600',
+                },
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                presentation: 'modal',
+              }}
+            />
+            <Stack.Screen
               name="settings"
               options={{
                 title: 'Settings',

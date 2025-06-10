@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-interface Product {
+export interface Product {
   id: number;
   name: string;
   price: number;
@@ -26,14 +26,14 @@ interface Product {
   images?: string[];
 }
 
-interface ProductListProps {
+export interface ProductListProps {
   products: Product[];
   onAddToCart: (product: Product) => void;
-  onProductPress?: (product: Product) => void; // New prop for navigation
+  onProductPress?: (product: Product) => void;
 }
 
 const { width } = Dimensions.get('window');
-const itemWidth = (width - 48) / 2; // Account for padding and margin
+const itemWidth = (width - 48) / 2;
 
 const colors = {
   primary: '#667eea',
@@ -64,10 +64,10 @@ const colors = {
   fontWeightBold: '700' as const,
 };
 
-const ProductList: React.FC<ProductListProps> = ({ 
-  products, 
-  onAddToCart, 
-  onProductPress 
+const ProductList: React.FC<ProductListProps> = ({
+  products,
+  onAddToCart,
+  onProductPress,
 }) => {
   const renderStars = (rating: number) => {
     const stars = [];
@@ -79,90 +79,105 @@ const ProductList: React.FC<ProductListProps> = ({
         <Ionicons key={i} name="star" size={12} color={colors.warning} />
       );
     }
-
     if (hasHalfStar) {
       stars.push(
         <Ionicons key="half" name="star-half" size={12} color={colors.warning} />
       );
     }
-
     const remainingStars = 5 - Math.ceil(rating);
     for (let i = 0; i < remainingStars; i++) {
       stars.push(
         <Ionicons key={`empty-${i}`} name="star-outline" size={12} color={colors.textLighter} />
       );
     }
-
     return stars;
   };
 
-  const renderProduct = ({ item }: { item: Product }) => (
-    <TouchableOpacity 
-      style={styles.productCard} 
-      onPress={() => onProductPress?.(item)}
-      activeOpacity={0.8}
-    >
-      <LinearGradient
-        colors={['#ffffff', '#f8fafc']}
-        style={styles.cardGradient}
+  const renderProduct = ({ item }: { item: Product }) => {
+    const displayPrice =
+      typeof item.price === 'number'
+        ? item.price
+        : typeof item.price === 'string'
+        ? Number(item.price)
+        : 0;
+
+    // Defensive: treat 0 or undefined/false stock as Out of Stock
+    const isInStock =
+      typeof item.inStock === 'boolean'
+        ? item.inStock
+        : (typeof item.stockCount === 'number' ? item.stockCount > 0 : true); // Default to true
+
+    return (
+      <TouchableOpacity
+        style={styles.productCard}
+        onPress={() => onProductPress?.(item)}
+        activeOpacity={0.8}
       >
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: item.image }} style={styles.productImage} />
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>{item.category}</Text>
-          </View>
-        </View>
-        
-        <View style={styles.productInfo}>
-          <Text style={styles.productName} numberOfLines={2}>
-            {item.name}
-          </Text>
-          
-          <View style={styles.ratingContainer}>
-            <View style={styles.starsContainer}>
-              {renderStars(item.rating)}
+        <LinearGradient
+          colors={['#ffffff', '#f8fafc']}
+          style={styles.cardGradient}
+        >
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: item.image }} style={styles.productImage} />
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{item.category}</Text>
             </View>
-            <Text style={styles.ratingText}>({item.rating})</Text>
           </View>
-          
-          <Text style={styles.productDescription} numberOfLines={2}>
-            {item.description}
-          </Text>
-          
-          <View style={styles.priceContainer}>
-            <Text style={styles.price}>${item.price.toFixed(2)}</Text>
-            {item.inStock && (
-              <Text style={styles.stockText}>In Stock</Text>
-            )}
-          </View>
-          
-          <TouchableOpacity
-            onPress={(e) => {
-              e.stopPropagation(); // Prevent triggering onProductPress
-              onAddToCart(item);
-            }}
-            style={styles.addButton}
-            disabled={!item.inStock}
-          >
-            <LinearGradient
-              colors={item.inStock ? colors.buttonGradient : [colors.textLighter, colors.textLighter]}
-              style={styles.addButtonGradient}
-            >
-              <Ionicons 
-                name="cart" 
-                size={16} 
-                color="white" 
-                style={styles.cartIcon}
-              />
-              <Text style={styles.addButtonText}>
-                {item.inStock ? 'Add' : 'Out of Stock'}
+
+          <View style={styles.productInfo}>
+            <Text style={styles.productName} numberOfLines={2}>
+              {item.name}
+            </Text>
+
+            <View style={styles.ratingContainer}>
+              <View style={styles.starsContainer}>
+                {renderStars(item.rating)}
+              </View>
+              <Text style={styles.ratingText}>({item.rating})</Text>
+            </View>
+
+            <Text style={styles.productDescription} numberOfLines={2}>
+              {item.description}
+            </Text>
+
+            <View style={styles.priceContainer}>
+              <Text style={styles.price}>
+                ${displayPrice.toFixed(2)}
               </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
+              {isInStock
+                ? <Text style={styles.stockText}>In Stock</Text>
+                : <Text style={[styles.stockText, { color: colors.textLight }]}>Out of Stock</Text>
+              }
+            </View>
+
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation?.();
+                if (isInStock) onAddToCart(item);
+              }}
+              style={styles.addButton}
+              disabled={!isInStock}
+            >
+              <LinearGradient
+                colors={isInStock ? colors.buttonGradient : [colors.textLighter, colors.textLighter]}
+                style={styles.addButtonGradient}
+              >
+                <Ionicons
+                  name="cart"
+                  size={16}
+                  color="white"
+                  style={styles.cartIcon}
+                />
+                <Text style={styles.addButtonText}>
+                  {isInStock ? 'Add' : 'Out of Stock'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -199,6 +214,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
+    backgroundColor: colors.backgroundCard,
+    marginBottom: colors.spacingMd,
   },
   cardGradient: {
     borderRadius: colors.borderRadiusLarge,

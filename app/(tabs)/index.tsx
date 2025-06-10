@@ -1,15 +1,23 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useMemo, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useCart } from '../../components/CartContext';
 import Cart from '../../components/Cart';
+import { useCart } from '../../components/CartContext';
 import Header from '../../components/Header';
 import Navbar from '../../components/Navbar';
-import ProductList from '../../components/ProductList';
-import { productsData, Product, FilterOptions } from '../data/products';
+import ProductList, { Product } from '../../components/ProductList';
+import { fetchProducts } from '../../data/products';
 
-// Enhanced color scheme with gradients
+export interface FilterOptions {
+  category: string;
+  priceRange: {
+    min: number;
+    max: number;
+  };
+  sortBy: 'name' | 'price-low' | 'price-high' | 'rating';
+}
+
 const colors = {
   primary: '#667eea',
   primaryLight: '#764ba2',
@@ -60,7 +68,7 @@ const Index: React.FC = () => {
   const { category: routeCategory } = useLocalSearchParams<{ category?: string }>();
   const { items: cart, addToCart } = useCart();
 
-  // Search and filter states
+  const [productsData, setProductsData] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filters, setFilters] = useState<FilterOptions>({
     category: routeCategory && typeof routeCategory === 'string' ? routeCategory : 'All',
@@ -68,38 +76,39 @@ const Index: React.FC = () => {
     sortBy: 'name'
   });
 
-  // When route category changes, update filter
-  React.useEffect(() => {
+  // --- Ensure filters are always in sync with category route param ---
+  useEffect(() => {
     if (routeCategory && typeof routeCategory === 'string') {
       setFilters((prev) => ({ ...prev, category: routeCategory }));
     }
   }, [routeCategory]);
 
-  // Filter and search products
+  // --- Fetch and normalize products, and update available categories ---
+  useEffect(() => {
+    fetchProducts().then(products => setProductsData(products ?? []));
+  }, []);
+
+  // --- Filtering logic ---
   const filteredProducts = useMemo(() => {
-    let result = productsData.filter(product => {
-      // Search filter
+    const safeProducts = Array.isArray(productsData) ? productsData : [];
+    let result = safeProducts.filter(product => {
+      // Defensive: ensure price is a number
+      const price = typeof product.price === 'number' ? product.price : parseFloat(String(product.price));
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // Category filter (from filter or from URL param)
       const matchesCategory =
         filters.category === 'All' ||
         product.category === filters.category;
-
-      // Price range filter
-      const matchesPrice = product.price >= filters.priceRange.min && product.price <= filters.priceRange.max;
-
+      const matchesPrice = price >= filters.priceRange.min && price <= filters.priceRange.max;
       return matchesSearch && matchesCategory && matchesPrice;
     });
 
-    // Sort products
     switch (filters.sortBy) {
       case 'price-low':
-        result.sort((a, b) => a.price - b.price);
+        result.sort((a, b) => Number(a.price) - Number(b.price));
         break;
       case 'price-high':
-        result.sort((a, b) => b.price - a.price);
+        result.sort((a, b) => Number(b.price) - Number(a.price));
         break;
       case 'rating':
         result.sort((a, b) => b.rating - a.rating);
@@ -109,25 +118,16 @@ const Index: React.FC = () => {
         result.sort((a, b) => a.name.localeCompare(b.name));
         break;
     }
-
     return result;
-  }, [searchQuery, filters]);
+  }, [searchQuery, filters, productsData]);
 
-  // Get unique categories
-  const categories = useMemo(() => {
-    const uniqueCategories = Array.from(new Set(productsData.map(p => p.category)));
-    return ['All', ...uniqueCategories];
-  }, []);
-
-  // Navigate to product detail
+  // --- Product Details Navigation ---
   const handleProductPress = (product: Product): void => {
     router.push(`/product/${product.id}`);
   };
 
-  // Calculate total number of items in cart
   const cartItemsCount: number = cart.reduce((total, item) => total + item.quantity, 0);
 
-  // Cart modal state
   const [showCart, setShowCart] = useState<boolean>(false);
 
   return (
@@ -148,8 +148,7 @@ const Index: React.FC = () => {
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             filters={filters}
-            onFiltersChange={setFilters}
-            categories={categories}
+            onFiltersChange={setFilters} // This is critical for filter functionality!
           />
         )}
 
@@ -161,7 +160,7 @@ const Index: React.FC = () => {
         ) : (
           <ProductList
             products={filteredProducts}
-            onAddToCart={addToCart}
+            onAddToCart={(product) => addToCart(product, 1)}
             onProductPress={handleProductPress}
           />
         )}

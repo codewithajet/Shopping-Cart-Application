@@ -1,6 +1,9 @@
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   Pressable,
@@ -12,8 +15,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -21,7 +22,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import { categoriesData } from '../data/categories';
+import { Category, fetchCategories } from '../../data/categories';
 
 const colors = {
   primary: '#667eea',
@@ -42,15 +43,22 @@ const CategoriesScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const scrollY = useSharedValue(0);
 
-  // Filter categories based on search
+  const [categoriesData, setCategoriesData] = useState<Category[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    fetchCategories()
+      .then((data) => setCategoriesData(data))
+      .finally(() => setLoading(false));
+  }, []);
+
   const filteredCategories = useMemo(() => {
     return categoriesData.filter(category =>
       category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       category.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [searchQuery, categoriesData]);
 
-  // Animated header style
   const headerAnimatedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(scrollY.value, [0, 100], [1, 0.9]);
     const translateY = interpolate(scrollY.value, [0, 100], [0, -10]);
@@ -60,12 +68,11 @@ const CategoriesScreen: React.FC = () => {
     };
   });
 
-  // Navigate to product list filtered by category
   const handleCategoryPress = (categoryName: string) => {
     router.push({ pathname: '/', params: { category: categoryName } });
   };
 
-  const renderCategoryCard = ({ item, index }: { item: typeof categoriesData[0]; index: number }) => (
+  const renderCategoryCard = ({ item, index }: { item: Category; index: number }) => (
     <Animated.View
       entering={FadeInDown.delay(index * 100).springify()}
       style={styles.categoryCard}
@@ -134,28 +141,35 @@ const CategoriesScreen: React.FC = () => {
           </Animated.View>
         </Animated.View>
 
-        {/* Categories Grid */}
-        <ScrollView
-          style={styles.content}
-          showsVerticalScrollIndicator={false}
-          onScroll={(event) => {
-            scrollY.value = event.nativeEvent.contentOffset.y;
-          }}
-          scrollEventThrottle={16}
-        >
-          <View style={styles.categoriesContainer}>
-            <FlatList
-              data={filteredCategories}
-              renderItem={renderCategoryCard}
-              keyExtractor={(item) => item.id.toString()}
-              numColumns={2}
-              scrollEnabled={false}
-              contentContainerStyle={styles.categoriesGrid}
-              columnWrapperStyle={styles.categoryRow}
-            />
+        {/* Loading */}
+        {loading ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
-          <View style={styles.bottomSpacing} />
-        </ScrollView>
+        ) : (
+          // Categories Grid
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            onScroll={(event) => {
+              scrollY.value = event.nativeEvent.contentOffset.y;
+            }}
+            scrollEventThrottle={16}
+          >
+            <View style={styles.categoriesContainer}>
+              <FlatList
+                data={filteredCategories}
+                renderItem={renderCategoryCard}
+                keyExtractor={(item) => item.id.toString()}
+                numColumns={2}
+                scrollEnabled={false}
+                contentContainerStyle={styles.categoriesGrid}
+                columnWrapperStyle={styles.categoryRow}
+              />
+            </View>
+            <View style={styles.bottomSpacing} />
+          </ScrollView>
+        )}
       </SafeAreaView>
     </LinearGradient>
   );

@@ -5,6 +5,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import CartItem from './CartItem';
 import { useCart, CartItemType } from './CartContext';
 
+// If using React Navigation
+import { useNavigation } from '@react-navigation/native';
+
 const colors = {
   primary: '#3f51b5',
   secondary: '#ff4081',
@@ -22,27 +25,18 @@ const Cart: React.FC<{ visible: boolean; onClose: () => void }> = ({ visible, on
   const { items, changeQuantity, removeFromCart, clearCart } = useCart();
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+  // Use navigation to go to Checkout page
+  const navigation = useNavigation();
+
   const handleCheckout = () => {
     if (items.length === 0) {
       Alert.alert('🛒 Empty Cart', 'Please add some items to your cart before checkout.');
       return;
     }
-    Alert.alert(
-      '🎉 Checkout Confirmation',
-      `Ready to complete your purchase?\n\n💰 Total: $${total.toFixed(2)}\n📦 ${items.length} items`,
-      [
-        { text: 'Keep Shopping', style: 'cancel' },
-        {
-          text: 'Complete Order',
-          style: 'default',
-          onPress: () => {
-            Alert.alert('✅ Order Confirmed!', 'Thank you for your purchase!');
-            clearCart();
-            onClose();
-          },
-        },
-      ]
-    );
+    onClose();
+    // Navigate to Checkout page. Make sure you have a Checkout screen in your navigator!
+    // You can pass cart items if needed, but it's better to use context.
+    navigation.navigate('Checkout');
   };
 
   return (

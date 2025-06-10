@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,70 @@ import {
   Modal,
   Dimensions,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { getApiBaseUrl } from '../config/apiConfig';
+
+const { width, height } = Dimensions.get('window');
+
+const colors = {
+  primary: '#667eea',
+  primaryLight: '#764ba2',
+  secondary: '#f093fb',
+  accent: '#43e97b',
+  textColor: '#2d3748',
+  textDark: '#1a202c',
+  textLight: '#718096',
+  textLighter: '#a0aec0',
+  backgroundCard: '#ffffff',
+  backgroundHover: '#edf2f7',
+  borderColor: '#e2e8f0',
+  shadowColor: 'rgba(0, 0, 0, 0.1)',
+  buttonGradient: ['#667eea', '#764ba2'] as [string, string],
+  accentGradient: ['#43e97b', '#38f9d7'] as [string, string],
+  secondaryGradient: ['#f093fb', '#f5576c'] as [string, string],
+  borderRadius: 12,
+  borderRadiusLarge: 20,
+  spacingXs: 4,
+  spacingSm: 8,
+  spacingMd: 16,
+  spacingLg: 24,
+  spacingXl: 32,
+  fontSizeXs: 12,
+  fontSizeSm: 14,
+  fontSizeMd: 16,
+  fontSizeLg: 18,
+  fontWeightMedium: '500' as const,
+  fontWeightSemiBold: '600' as const,
+  fontWeightBold: '700' as const,
+};
+
+const categoryIcons: { [key: string]: any } = {
+  'All': 'apps-outline',
+  'Electronics': 'phone-portrait-outline',
+  'Fashion': 'shirt-outline',
+  'Home': 'home-outline',
+  'Books': 'book-outline',
+  'Sports': 'fitness-outline',
+};
+
+const sortOptions = [
+  { value: 'name' as const, label: 'Name A-Z', icon: 'text-outline' as any },
+  { value: 'price-low' as const, label: 'Price: Low to High', icon: 'arrow-up-outline' as any },
+  { value: 'price-high' as const, label: 'Price: High to Low', icon: 'arrow-down-outline' as any },
+  { value: 'rating' as const, label: 'Rating', icon: 'star-outline' as any },
+];
+
+const priceRanges = [
+  { min: 0, max: 50, label: 'Under $50', icon: 'cash-outline' as any },
+  { min: 50, max: 100, label: '$50 - $100', icon: 'card-outline' as any },
+  { min: 100, max: 500, label: '$100 - $500', icon: 'wallet-outline' as any },
+  { min: 500, max: 1000, label: '$500 - $1000', icon: 'diamond-outline' as any },
+  { min: 1000, max: 2000, label: 'Over $1000', icon: 'trophy-outline' as any },
+  { min: 0, max: 2000, label: 'All Prices', icon: 'infinite-outline' as any },
+];
 
 interface FilterOptions {
   category: string;
@@ -28,52 +88,75 @@ interface NavbarProps {
   onSearchChange: (query: string) => void;
   filters: FilterOptions;
   onFiltersChange: (filters: FilterOptions) => void;
-  categories: string[];
 }
 
-const { width, height } = Dimensions.get('window');
+type CategoryType = {
+  id: string | number;
+  name: string;
+  description?: string;
+  icon?: string;
+  image?: string;
+  productCount?: number;
+};
 
 const Navbar: React.FC<NavbarProps> = ({
   searchQuery,
   onSearchChange,
   filters,
   onFiltersChange,
-  categories,
 }) => {
+  const [categories, setCategories] = useState<CategoryType[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState<boolean>(true);
+
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [tempFilters, setTempFilters] = useState<FilterOptions>(filters);
   const [searchFocused, setSearchFocused] = useState<boolean>(false);
 
-  const sortOptions = [
-    { value: 'name' as const, label: 'Name A-Z', icon: 'text-outline' as any },
-    { value: 'price-low' as const, label: 'Price: Low to High', icon: 'arrow-up-outline' as any },
-    { value: 'price-high' as const, label: 'Price: High to Low', icon: 'arrow-down-outline' as any },
-    { value: 'rating' as const, label: 'Rating', icon: 'star-outline' as any },
-  ];
+  useEffect(() => {
+    setTempFilters(filters);
+  }, [filters]);
 
-  const priceRanges = [
-    { min: 0, max: 50, label: 'Under $50', icon: 'cash-outline' as any },
-    { min: 50, max: 100, label: '$50 - $100', icon: 'card-outline' as any },
-    { min: 100, max: 500, label: '$100 - $500', icon: 'wallet-outline' as any },
-    { min: 500, max: 1000, label: '$500 - $1000', icon: 'diamond-outline' as any },
-    { min: 1000, max: 2000, label: 'Over $1000', icon: 'trophy-outline' as any },
-    { min: 0, max: 2000, label: 'All Prices', icon: 'infinite-outline' as any },
-  ];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        const response = await fetch(`${getApiBaseUrl()}/categories`);
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        const data = await response.json();
+        let categoriesList: CategoryType[] = [];
+        if (Array.isArray(data)) {
+          categoriesList = data;
+        } else if (Array.isArray(data.data)) {
+          categoriesList = data.data;
+        }
+        setCategories([{ id: 'all', name: 'All' }, ...categoriesList]);
+      } catch (error) {
+        setCategories([{ id: 'all', name: 'All' }]);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
-  const categoryIcons: { [key: string]: any } = {
-    'All': 'apps-outline',
-    'Electronics': 'phone-portrait-outline',
-    'Fashion': 'shirt-outline',
-    'Home': 'home-outline',
-    'Books': 'book-outline',
-    'Sports': 'fitness-outline',
+  // MAIN: Fetch products for category filter (calls parent onFiltersChange)
+  const handleCategoryPress = async (categoryName: string) => {
+    // If "All", just update filters and let parent fetch all products
+    if (categoryName === 'All') {
+      onFiltersChange({ ...filters, category: 'All' });
+      return;
+    }
+
+    // Fetch products for this category if you want server-side filtering:
+    // e.g., GET /products?category=categoryName
+    // But here, just update the filter and let parent handle fetch/filter logic.
+    onFiltersChange({ ...filters, category: categoryName });
   };
 
   const applyFilters = () => {
     onFiltersChange(tempFilters);
     setShowFilters(false);
   };
-
   const resetFilters = () => {
     const defaultFilters: FilterOptions = {
       category: 'All',
@@ -84,19 +167,18 @@ const Navbar: React.FC<NavbarProps> = ({
     onFiltersChange(defaultFilters);
     setShowFilters(false);
   };
-
   const hasActiveFilters = () => {
-    return filters.category !== 'All' || 
-          filters.priceRange.min !== 0 || 
-          filters.priceRange.max !== 2000 || 
-          filters.sortBy !== 'name';
+    return filters.category !== 'All' ||
+      filters.priceRange.min !== 0 ||
+      filters.priceRange.max !== 2000 ||
+      filters.sortBy !== 'name';
   };
 
   return (
     <>
       {/* Main Navbar */}
       <LinearGradient
-        colors={colors.cardGradient}
+        colors={colors.buttonGradient}
         style={styles.navbar}
       >
         {/* Search Bar */}
@@ -105,15 +187,15 @@ const Navbar: React.FC<NavbarProps> = ({
             colors={searchFocused ? colors.accentGradient : ['#f8fafc', '#e2e8f0']}
             style={styles.searchGradient}
           >
-            <Ionicons 
-              name="search" 
-              size={20} 
-              color={searchFocused ? colors.textDark : colors.textLight} 
-              style={styles.searchIcon} 
+            <Ionicons
+              name="search"
+              size={20}
+              color={searchFocused ? colors.textDark : colors.textLight}
+              style={styles.searchIcon}
             />
             <TextInput
               style={[styles.searchInput, searchFocused && styles.searchInputFocused]}
-              placeholder="Search amazing products..."
+              placeholder="Search products..."
               placeholderTextColor={colors.textLight}
               value={searchQuery}
               onChangeText={onSearchChange}
@@ -129,7 +211,7 @@ const Navbar: React.FC<NavbarProps> = ({
         </View>
 
         {/* Filter Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.filterButtonContainer}
           onPress={() => setShowFilters(true)}
         >
@@ -137,9 +219,9 @@ const Navbar: React.FC<NavbarProps> = ({
             colors={hasActiveFilters() ? colors.secondaryGradient : colors.buttonGradient}
             style={styles.filterButton}
           >
-            <Ionicons 
-              name="options" 
-              size={20} 
+            <Ionicons
+              name="options"
+              size={20}
               color="white"
             />
             {hasActiveFilters() && (
@@ -154,46 +236,55 @@ const Navbar: React.FC<NavbarProps> = ({
         </TouchableOpacity>
       </LinearGradient>
 
-      {/* Enhanced Category Filter */}
+      {/* Category Chip Scroll */}
       <LinearGradient
         colors={['rgba(255,255,255,0.95)', 'rgba(248,250,252,0.95)']}
         style={styles.categorySection}
       >
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          style={styles.categoryScroll}
-          contentContainerStyle={styles.categoryContainer}
-        >
-          {categories.map((category, index) => (
-            <TouchableOpacity
-              key={category}
-              style={styles.categoryChipContainer}
-              onPress={() => onFiltersChange({ ...filters, category })}
-            >
-              <LinearGradient
-                colors={filters.category === category ? colors.buttonGradient : ['#ffffff', '#f1f5f9']}
-                style={[styles.categoryChip, filters.category === category && styles.categoryChipActive]}
+        {loadingCategories ? (
+          <ActivityIndicator size="small" color={colors.primary} style={{ margin: 12 }} />
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.categoryScroll}
+            contentContainerStyle={styles.categoryContainer}
+          >
+            {categories.map((category, index) => (
+              <TouchableOpacity
+                key={category.id ?? index}
+                style={styles.categoryChipContainer}
+                onPress={() => handleCategoryPress(category.name)}
               >
-                <Ionicons
-                  name={categoryIcons[category] || 'cube-outline'}
-                  size={16}
-                  color={filters.category === category ? 'white' : colors.primary}
-                  style={styles.categoryIcon}
-                />
-                <Text style={[
-                  styles.categoryChipText,
-                  filters.category === category && styles.categoryChipTextActive
-                ]}>
-                  {category}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+                <LinearGradient
+                  colors={filters.category === category.name ? colors.buttonGradient : ['#ffffff', '#f1f5f9']}
+                  style={[
+                    styles.categoryChip,
+                    filters.category === category.name && styles.categoryChipActive,
+                  ]}
+                >
+                  <Ionicons
+                    name={categoryIcons[category.name] || 'cube-outline'}
+                    size={16}
+                    color={filters.category === category.name ? 'white' : colors.primary}
+                    style={styles.categoryIcon}
+                  />
+                  <Text
+                    style={[
+                      styles.categoryChipText,
+                      filters.category === category.name && styles.categoryChipTextActive,
+                    ]}
+                  >
+                    {category.name}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
       </LinearGradient>
 
-      {/* Enhanced Filter Modal */}
+      {/* Filter Modal */}
       <Modal
         visible={showFilters}
         animationType="slide"
@@ -204,7 +295,7 @@ const Navbar: React.FC<NavbarProps> = ({
         <SafeAreaView style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <LinearGradient
-              colors={colors.cardGradient}
+              colors={colors.buttonGradient}
               style={styles.modalContent}
             >
               {/* Modal Header */}
@@ -212,8 +303,8 @@ const Navbar: React.FC<NavbarProps> = ({
                 colors={colors.buttonGradient}
                 style={styles.modalHeader}
               >
-                <Text style={styles.modalTitle}>🎯 Filters & Sorting</Text>
-                <TouchableOpacity 
+                <Text style={styles.modalTitle}>Filters & Sorting</Text>
+                <TouchableOpacity
                   onPress={() => setShowFilters(false)}
                   style={styles.closeButton}
                 >
@@ -221,9 +312,8 @@ const Navbar: React.FC<NavbarProps> = ({
                 </TouchableOpacity>
               </LinearGradient>
 
-              {/* Modal Body with ScrollView */}
-              <ScrollView 
-                style={styles.modalBody} 
+              <ScrollView
+                style={styles.modalBody}
                 showsVerticalScrollIndicator={false}
                 bounces={false}
                 contentContainerStyle={styles.modalBodyContent}
@@ -235,11 +325,13 @@ const Navbar: React.FC<NavbarProps> = ({
                     <Text style={styles.sectionTitle}>Sort By</Text>
                   </View>
                   <View style={styles.optionsContainer}>
-                    {sortOptions.map((option) => (
+                    {sortOptions.map((option, idx) => (
                       <TouchableOpacity
-                        key={option.value}
+                        key={`${option.value}-${idx}`}
                         style={styles.optionRow}
-                        onPress={() => setTempFilters({ ...tempFilters, sortBy: option.value as FilterOptions['sortBy'] })}
+                        onPress={() =>
+                          setTempFilters({ ...tempFilters, sortBy: option.value as FilterOptions['sortBy'] })
+                        }
                         activeOpacity={0.7}
                       >
                         <View style={[
@@ -278,35 +370,35 @@ const Navbar: React.FC<NavbarProps> = ({
                     <Text style={styles.sectionTitle}>Category</Text>
                   </View>
                   <View style={styles.optionsContainer}>
-                    {categories.map((category) => (
+                    {categories.map((category, idx) => (
                       <TouchableOpacity
-                        key={category}
+                        key={category.id ?? idx}
                         style={styles.optionRow}
-                        onPress={() => setTempFilters({ ...tempFilters, category })}
+                        onPress={() => setTempFilters({ ...tempFilters, category: category.name })}
                         activeOpacity={0.7}
                       >
                         <View style={[
                           styles.optionContent,
-                          tempFilters.category === category && styles.optionContentActiveSecondary
+                          tempFilters.category === category.name && styles.optionContentActive
                         ]}>
                           <View style={styles.optionLeft}>
                             <Ionicons
-                              name={categoryIcons[category] || 'cube-outline'}
+                              name={categoryIcons[category.name] || 'cube-outline'}
                               size={20}
-                              color={tempFilters.category === category ? 'white' : colors.primary}
+                              color={tempFilters.category === category.name ? 'white' : colors.primary}
                               style={styles.optionIcon}
                             />
                             <Text style={[
                               styles.optionText,
-                              tempFilters.category === category && styles.optionTextActive
+                              tempFilters.category === category.name && styles.optionTextActive
                             ]}>
-                              {category}
+                              {category.name}
                             </Text>
                           </View>
                           <Ionicons
-                            name={tempFilters.category === category ? "checkmark-circle" : "ellipse-outline"}
+                            name={tempFilters.category === category.name ? "checkmark-circle" : "ellipse-outline"}
                             size={24}
-                            color={tempFilters.category === category ? 'white' : colors.textLight}
+                            color={tempFilters.category === category.name ? 'white' : colors.textLight}
                           />
                         </View>
                       </TouchableOpacity>
@@ -321,55 +413,55 @@ const Navbar: React.FC<NavbarProps> = ({
                     <Text style={styles.sectionTitle}>Price Range</Text>
                   </View>
                   <View style={styles.optionsContainer}>
-                    {priceRanges.map((range) => (
+                    {priceRanges.map((range, idx) => (
                       <TouchableOpacity
-                        key={`${range.min}-${range.max}`}
+                        key={`${range.min}-${range.max}-${idx}`}
                         style={styles.optionRow}
-                        onPress={() => setTempFilters({ 
-                          ...tempFilters, 
-                          priceRange: { min: range.min, max: range.max } 
+                        onPress={() => setTempFilters({
+                          ...tempFilters,
+                          priceRange: { min: range.min, max: range.max }
                         })}
                         activeOpacity={0.7}
                       >
                         <View style={[
                           styles.optionContent,
-                          tempFilters.priceRange.min === range.min && 
-                          tempFilters.priceRange.max === range.max && 
-                          styles.optionContentActivePrimary
+                          tempFilters.priceRange.min === range.min &&
+                          tempFilters.priceRange.max === range.max &&
+                          styles.optionContentActive
                         ]}>
                           <View style={styles.optionLeft}>
                             <Ionicons
                               name={range.icon}
                               size={20}
                               color={
-                                tempFilters.priceRange.min === range.min && 
-                                tempFilters.priceRange.max === range.max 
-                                  ? 'white' 
+                                tempFilters.priceRange.min === range.min &&
+                                tempFilters.priceRange.max === range.max
+                                  ? 'white'
                                   : colors.primary
                               }
                               style={styles.optionIcon}
                             />
                             <Text style={[
                               styles.optionText,
-                              tempFilters.priceRange.min === range.min && 
-                              tempFilters.priceRange.max === range.max && 
-                              styles.optionTextActive
+                              tempFilters.priceRange.min === range.min &&
+                                tempFilters.priceRange.max === range.max &&
+                                styles.optionTextActive
                             ]}>
                               {range.label}
                             </Text>
                           </View>
                           <Ionicons
                             name={
-                              tempFilters.priceRange.min === range.min && 
-                              tempFilters.priceRange.max === range.max 
-                                ? "checkmark-circle" 
+                              tempFilters.priceRange.min === range.min &&
+                              tempFilters.priceRange.max === range.max
+                                ? "checkmark-circle"
                                 : "ellipse-outline"
                             }
                             size={24}
                             color={
-                              tempFilters.priceRange.min === range.min && 
-                              tempFilters.priceRange.max === range.max 
-                                ? 'white' 
+                              tempFilters.priceRange.min === range.min &&
+                              tempFilters.priceRange.max === range.max
+                                ? 'white'
                                 : colors.textLight
                             }
                           />
@@ -380,7 +472,6 @@ const Navbar: React.FC<NavbarProps> = ({
                 </View>
               </ScrollView>
 
-              {/* Modal Footer */}
               <View style={styles.modalFooter}>
                 <TouchableOpacity style={styles.resetButtonContainer} onPress={resetFilters}>
                   <View style={styles.resetButton}>
@@ -388,7 +479,7 @@ const Navbar: React.FC<NavbarProps> = ({
                     <Text style={styles.resetButtonText}>Reset</Text>
                   </View>
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity style={styles.applyButtonContainer} onPress={applyFilters}>
                   <LinearGradient
                     colors={colors.accentGradient}
@@ -407,55 +498,8 @@ const Navbar: React.FC<NavbarProps> = ({
   );
 };
 
-// Enhanced color scheme with gradients
-const colors = {
-  primary: '#667eea',
-  primaryLight: '#764ba2',
-  primaryDark: '#667eea',
-  secondary: '#f093fb',
-  secondaryLight: '#f5576c',
-  secondaryDark: '#4facfe',
-  accent: '#43e97b',
-  accentDark: '#38f9d7',
-  textColor: '#2d3748',
-  textLight: '#718096',
-  textLighter: '#a0aec0',
-  textDark: '#1a202c',
-  backgroundMain: '#f7fafc',
-  backgroundCard: '#ffffff',
-  backgroundHover: '#edf2f7',
-  borderColor: '#e2e8f0',
-  shadowColor: 'rgba(0, 0, 0, 0.1)',
-  // Gradient combinations
-  backgroundGradient: ['#667eea', '#764ba2'] as [string, string],
-  cardGradient: ['#ffffff', '#f8fafc'] as [string, string],
-  buttonGradient: ['#667eea', '#764ba2'] as [string, string],
-  accentGradient: ['#43e97b', '#38f9d7'] as [string, string],
-  secondaryGradient: ['#f093fb', '#f5576c'] as [string, string],
-  darkGradient: ['#2d3748', '#4a5568'] as [string, string],
-  // Design tokens
-  borderRadius: 12,
-  borderRadiusLarge: 20,
-  shadowElevation: 8,
-  spacingXs: 4,
-  spacingSm: 8,
-  spacingMd: 16,
-  spacingLg: 24,
-  spacingXl: 32,
-  spacingXxl: 48,
-  fontSizeXs: 12,
-  fontSizeSm: 14,
-  fontSizeMd: 16,
-  fontSizeLg: 18,
-  fontSizeXl: 20,
-  fontSizeXxl: 24,
-  fontWeightNormal: '400' as const,
-  fontWeightMedium: '500' as const,
-  fontWeightSemiBold: '600' as const,
-  fontWeightBold: '700' as const,
-};
-
 const styles = StyleSheet.create({
+  // ... [same as your styles definition above]
   navbar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -564,7 +608,7 @@ const styles = StyleSheet.create({
   },
   categoryChipText: {
     fontSize: colors.fontSizeSm,
-    color: colors.textDark,
+    color: colors.primary,
     fontWeight: colors.fontWeightSemiBold,
   },
   categoryChipTextActive: {
@@ -594,7 +638,7 @@ const styles = StyleSheet.create({
     paddingVertical: colors.spacingLg,
   },
   modalTitle: {
-    fontSize: colors.fontSizeXl,
+    fontSize: colors.fontSizeLg,
     fontWeight: colors.fontWeightBold,
     color: 'white',
   },
@@ -650,14 +694,6 @@ const styles = StyleSheet.create({
     borderColor: colors.borderColor,
   },
   optionContentActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  optionContentActiveSecondary: {
-    backgroundColor: colors.secondary,
-    borderColor: colors.secondary,
-  },
-  optionContentActivePrimary: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
