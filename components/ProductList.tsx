@@ -16,7 +16,8 @@ export interface Product {
   name: string;
   price: number;
   image: string;
-  category: string;
+  category_id: number;
+  category_name: string;
   description: string;
   rating: number;
   fullDescription?: string;
@@ -37,24 +38,12 @@ const itemWidth = (width - 48) / 2;
 
 const colors = {
   primary: '#667eea',
-  primaryLight: '#764ba2',
-  secondary: '#f093fb',
-  accent: '#43e97b',
-  textColor: '#2d3748',
-  textLight: '#718096',
-  textLighter: '#a0aec0',
-  backgroundCard: '#ffffff',
-  backgroundHover: '#edf2f7',
-  borderColor: '#e2e8f0',
-  shadowColor: 'rgba(0, 0, 0, 0.1)',
   warning: '#f59e0b',
   buttonGradient: ['#667eea', '#764ba2'] as [string, string],
-  borderRadius: 12,
   borderRadiusLarge: 20,
   spacingXs: 4,
   spacingSm: 8,
   spacingMd: 16,
-  spacingLg: 24,
   fontSizeXs: 12,
   fontSizeSm: 14,
   fontSizeMd: 16,
@@ -62,6 +51,8 @@ const colors = {
   fontWeightMedium: '500' as const,
   fontWeightSemiBold: '600' as const,
   fontWeightBold: '700' as const,
+  textLight: '#718096',
+  textColor: '#2d3748'
 };
 
 const ProductList: React.FC<ProductListProps> = ({
@@ -87,7 +78,7 @@ const ProductList: React.FC<ProductListProps> = ({
     const remainingStars = 5 - Math.ceil(rating);
     for (let i = 0; i < remainingStars; i++) {
       stars.push(
-        <Ionicons key={`empty-${i}`} name="star-outline" size={12} color={colors.textLighter} />
+        <Ionicons key={`empty-${i}`} name="star-outline" size={12} color={colors.textLight} />
       );
     }
     return stars;
@@ -101,11 +92,10 @@ const ProductList: React.FC<ProductListProps> = ({
         ? Number(item.price)
         : 0;
 
-    // Defensive: treat 0 or undefined/false stock as Out of Stock
     const isInStock =
       typeof item.inStock === 'boolean'
         ? item.inStock
-        : (typeof item.stockCount === 'number' ? item.stockCount > 0 : true); // Default to true
+        : (typeof item.stockCount === 'number' ? item.stockCount > 0 : true);
 
     return (
       <TouchableOpacity
@@ -120,7 +110,7 @@ const ProductList: React.FC<ProductListProps> = ({
           <View style={styles.imageContainer}>
             <Image source={{ uri: item.image }} style={styles.productImage} />
             <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText}>{item.category}</Text>
+              <Text style={styles.categoryText}>{item.category_name}</Text>
             </View>
           </View>
 
@@ -159,7 +149,7 @@ const ProductList: React.FC<ProductListProps> = ({
               disabled={!isInStock}
             >
               <LinearGradient
-                colors={isInStock ? colors.buttonGradient : [colors.textLighter, colors.textLighter]}
+                colors={isInStock ? colors.buttonGradient : [colors.textLight, colors.textLight]}
                 style={styles.addButtonGradient}
               >
                 <Ionicons
@@ -210,11 +200,11 @@ const styles = StyleSheet.create({
     width: itemWidth,
     borderRadius: colors.borderRadiusLarge,
     elevation: 4,
-    shadowColor: colors.shadowColor,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: '#fff',
     marginBottom: colors.spacingMd,
   },
   cardGradient: {
@@ -287,11 +277,11 @@ const styles = StyleSheet.create({
   },
   stockText: {
     fontSize: colors.fontSizeXs,
-    color: colors.accent,
+    color: colors.primary,
     fontWeight: colors.fontWeightSemiBold,
   },
   addButton: {
-    borderRadius: colors.borderRadius,
+    borderRadius: colors.borderRadiusLarge,
     overflow: 'hidden',
   },
   addButtonGradient: {
