@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/kidaf.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.codewithajet.Kidafpremiumshopping"
     },
     "web": {
       "bundler": "metro",
@@ -33,10 +34,18 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5a4fa7f7-0d08-479e-a303-885d73934eea"
+      }
+    },
+    "owner": "codewithajet"
   }
 }
