@@ -5,9 +5,12 @@ import Header from '../../components/Header';
 import Navbar from '../../components/Navbar';
 import Cart from '../../components/Cart';
 import { useCart } from '../../components/CartContext';
-import ProductList, { Product } from '../../components/ProductList';
-import { fetchProducts } from '../../data/products';
+import ProductList from '../../components/ProductList';
+import { Product, fetchProducts } from '../../data/products';
 import { fetchCategories, Category } from '../../data/categories';
+import { useRouter } from 'expo-router';
+import { useAppTheme } from '../../constants/ThemeContext'; // Use your ThemeContext!
+import { Colors } from '../../constants/Colors'; // Use your color palette!
 
 export interface FilterOptions {
   category_id: number | null;
@@ -18,13 +21,12 @@ export interface FilterOptions {
   sortBy: 'name' | 'price-low' | 'price-high' | 'rating';
 }
 
-const colors = {
-  primary: '#667eea',
-  backgroundGradient: ['#667eea', '#764ba2'] as [string, string],
-};
-
 const Index: React.FC = () => {
+  const router = useRouter();
   const { items: cart, addToCart } = useCart();
+  const { theme } = useAppTheme();
+  const palette = Colors[theme];
+  const isDark = theme === 'dark';
 
   const [productsData, setProductsData] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -37,7 +39,6 @@ const Index: React.FC = () => {
     sortBy: 'name'
   });
 
-  // Fetch categories and then products
   useEffect(() => {
     setLoading(true);
     fetchCategories().then((cats) => {
@@ -49,16 +50,13 @@ const Index: React.FC = () => {
     });
   }, []);
 
-  // Filtering logic (can be done on backend or here)
   const filteredProducts = useMemo(() => {
     let products = productsData;
-    // Filter by category
     if (filters.category_id !== null) {
       products = products.filter(
         (p) => p.category_id === filters.category_id
       );
     }
-    // Filter by search query
     if (searchQuery) {
       products = products.filter(
         (p) =>
@@ -66,11 +64,9 @@ const Index: React.FC = () => {
           p.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    // Filter by price range
     products = products.filter(
       (p) => p.price >= filters.priceRange.min && p.price <= filters.priceRange.max
     );
-    // Sort
     products = products.slice().sort((a, b) => {
       switch (filters.sortBy) {
         case 'price-low':
@@ -91,11 +87,11 @@ const Index: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={colors.backgroundGradient}
+      colors={palette.cardGradient as [string, string]}
       style={styles.container}
     >
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
 
         <Header
           cartItemsCount={cart.reduce((total, item) => total + item.quantity, 0)}
@@ -114,8 +110,8 @@ const Index: React.FC = () => {
 
         {loading ? (
           <View style={{flex: 1, justifyContent:'center', alignItems:'center'}}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={{color:colors.primary, marginTop:8}}>Loading products...</Text>
+            <ActivityIndicator size="large" color={palette.tint} />
+            <Text style={{color:palette.tint, marginTop:8}}>Loading products...</Text>
           </View>
         ) : showCart ? (
           <Cart
@@ -126,6 +122,10 @@ const Index: React.FC = () => {
           <ProductList
             products={filteredProducts}
             onAddToCart={(product) => addToCart(product, 1)}
+            onProductPress={(product) => {
+              router.push(`/product/${product.id}`);
+            }}
+            forcedTheme={theme}
           />
         )}
       </SafeAreaView>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -7,21 +7,22 @@ import { View, StyleSheet, Platform, Text, TouchableOpacity } from 'react-native
 import { LinearGradient } from 'expo-linear-gradient';
 import 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { CartProvider } from '../components/CartContext';
 
-// Enhanced custom themes with beautiful gradients and modern colors
+import { ThemeProvider, useAppTheme } from '../constants/ThemeContext'; // <- import your ThemeContext
+import { Colors } from '../constants/Colors'; // <- your color palette
+
+// Enhanced custom themes using your Colors palette
 const CustomLightTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: '#667eea',
-    background: '#f8fafc',
-    card: '#ffffff',
-    text: '#1a202c',
-    border: '#e2e8f0',
-    notification: '#38f9d7',
+    primary: Colors.light.tint,
+    background: Colors.light.background,
+    card: Colors.light.card,
+    text: Colors.light.text,
+    border: Colors.light.border,
+    notification: Colors.light.accent,
   },
 };
 
@@ -29,19 +30,18 @@ const CustomDarkTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    primary: '#667eea',
-    background: '#0f172a',
-    card: '#1e293b',
-    text: '#f1f5f9',
-    border: '#334155',
-    notification: '#38f9d7',
+    primary: Colors.dark.tint,
+    background: Colors.dark.background,
+    card: Colors.dark.card,
+    text: Colors.dark.text,
+    border: Colors.dark.border,
+    notification: Colors.dark.accent,
   },
 };
 
-// Beautiful gradient backgrounds
 const LightGradientBackground: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <LinearGradient
-    colors={['#667eea', '#764ba2', '#f093fb']}
+    colors={['#667eea', '#764ba2']}
     start={{ x: 0, y: 0 }}
     end={{ x: 1, y: 1 }}
     style={styles.gradientContainer}
@@ -54,7 +54,7 @@ const LightGradientBackground: React.FC<{ children: React.ReactNode }> = ({ chil
 
 const DarkGradientBackground: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <LinearGradient
-    colors={['#0f172a', '#1e293b', '#334155']}
+    colors={['#374151', '#1f2937']}
     start={{ x: 0, y: 0 }}
     end={{ x: 1, y: 1 }}
     style={styles.gradientContainer}
@@ -65,7 +65,13 @@ const DarkGradientBackground: React.FC<{ children: React.ReactNode }> = ({ child
   </LinearGradient>
 );
 
-export default function RootLayout() {
+// This hook uses the ThemeContext value for color scheme
+function useColorScheme() {
+  const { theme } = useAppTheme();
+  return theme;
+}
+
+function MainLayout() {
   const colorScheme = useColorScheme();
 
   const [loaded] = useFonts({
@@ -79,7 +85,7 @@ export default function RootLayout() {
         style={styles.loadingContainer}
       >
         <View style={styles.loadingContent}>
-          {/* Optional loading spinner or logo here */}
+          <Ionicons name="cart" size={56} color="#fff" />
         </View>
       </LinearGradient>
     );
@@ -90,7 +96,7 @@ export default function RootLayout() {
 
   return (
     <CartProvider>
-      <ThemeProvider value={theme}>
+      <NavigationThemeProvider value={theme}>
         <GradientBackground>
           <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
           <Stack
@@ -112,16 +118,18 @@ export default function RootLayout() {
                 title: 'Product Details',
                 headerShown: true,
                 headerTransparent: true,
-                headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
+                headerTintColor: theme.colors.text,
                 headerTitleStyle: {
                   fontFamily: 'SpaceMono',
                   fontSize: 18,
                   fontWeight: '600',
+                  color: theme.colors.text,
                 },
-                // Custom gradient header for product details, with back arrow
                 header: ({ navigation }) => (
                   <LinearGradient
-                    colors={['#667eea', '#764ba2']}
+                    colors={colorScheme === 'dark'
+                      ? ['#374151', '#1f2937']
+                      : ['#667eea', '#764ba2']}
                     style={{
                       flex: 1,
                       height: Platform.OS === 'ios' ? 110 : 80,
@@ -139,19 +147,21 @@ export default function RootLayout() {
                         marginRight: 12,
                         padding: 4,
                         borderRadius: 999,
-                        backgroundColor: 'rgba(255,255,255,0.12)',
+                        backgroundColor: colorScheme === 'dark'
+                          ? 'rgba(31,41,55,0.24)'
+                          : 'rgba(255,255,255,0.15)',
                       }}
                       accessibilityLabel="Go back"
                     >
                       <Ionicons
                         name="arrow-back"
                         size={26}
-                        color={colorScheme === 'dark' ? '#f1f5f9' : '#fff'}
+                        color={colorScheme === 'dark' ? '#f9fafb' : '#fff'}
                       />
                     </TouchableOpacity>
                     <Text
                       style={{
-                        color: colorScheme === 'dark' ? '#f1f5f9' : '#fff',
+                        color: colorScheme === 'dark' ? '#f9fafb' : '#fff',
                         fontFamily: 'SpaceMono',
                         fontSize: 18,
                         fontWeight: '600',
@@ -170,14 +180,15 @@ export default function RootLayout() {
                 title: 'Checkout',
                 headerShown: true,
                 headerTransparent: true,
-                headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
+                headerTintColor: theme.colors.text,
                 headerTitleStyle: {
                   fontFamily: 'SpaceMono',
                   fontSize: 18,
                   fontWeight: '600',
+                  color: theme.colors.text,
                 },
                 headerStyle: {
-                  backgroundColor: '#fff',
+                  backgroundColor: theme.colors.background,
                 },
                 presentation: 'modal',
               }}
@@ -188,14 +199,15 @@ export default function RootLayout() {
                 title: 'Settings',
                 headerShown: true,
                 headerTransparent: true,
-                headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
+                headerTintColor: theme.colors.text,
                 headerTitleStyle: {
                   fontFamily: 'SpaceMono',
                   fontSize: 18,
                   fontWeight: '600',
+                  color: theme.colors.text,
                 },
                 headerStyle: {
-                  backgroundColor: '#fff',
+                  backgroundColor: theme.colors.background,
                 },
                 presentation: 'modal',
               }}
@@ -206,18 +218,31 @@ export default function RootLayout() {
                 title: 'Page Not Found',
                 headerShown: true,
                 headerTransparent: true,
-                headerTintColor: colorScheme === 'dark' ? '#f1f5f9' : '#1a202c',
+                headerTintColor: theme.colors.text,
                 headerTitleStyle: {
                   fontFamily: 'SpaceMono',
                   fontSize: 18,
                   fontWeight: '600',
+                  color: theme.colors.text,
+                },
+                headerStyle: {
+                  backgroundColor: theme.colors.background,
                 },
               }}
             />
           </Stack>
         </GradientBackground>
-      </ThemeProvider>
+      </NavigationThemeProvider>
     </CartProvider>
+  );
+}
+
+// Make sure to wrap with your ThemeProvider at the root
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <MainLayout />
+    </ThemeProvider>
   );
 }
 
@@ -231,7 +256,7 @@ const styles = StyleSheet.create({
   },
   darkOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.27)',
   },
   loadingContainer: {
     flex: 1,
@@ -239,16 +264,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingContent: {
-    padding: 20,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 24,
+    borderRadius: 18,
+    backgroundColor: 'rgba(52, 29, 137, 0.11)',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 6,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 10,
   },
 });

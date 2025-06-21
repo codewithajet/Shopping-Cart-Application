@@ -1,5 +1,3 @@
-// File: app/settings.tsx
-
 import React, { useState } from 'react';
 import {
   View,
@@ -11,11 +9,11 @@ import {
   Alert,
   SafeAreaView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useAppTheme } from '../constants/ThemeContext';
 
+// --- Types ---
 interface SettingsItemProps {
   icon: string;
   title: string;
@@ -33,6 +31,7 @@ interface SettingsSwitchProps {
   onValueChange: (value: boolean) => void;
 }
 
+// --- Components ---
 const SettingsItem: React.FC<SettingsItemProps> = ({
   icon,
   title,
@@ -41,8 +40,8 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
   rightElement,
   showArrow = true,
 }) => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { theme } = useAppTheme();
+  const isDark = theme === 'dark';
 
   return (
     <TouchableOpacity
@@ -52,6 +51,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
       ]}
       onPress={onPress}
       activeOpacity={0.7}
+      disabled={!onPress}
     >
       <View style={styles.settingsItemLeft}>
         <View style={[
@@ -110,9 +110,9 @@ const SettingsSwitch: React.FC<SettingsSwitchProps> = ({
       rightElement={
         <Switch
           value={value}
-          onValueChange={onValueChange}
+          onValueChange={(val: boolean) => onValueChange(val)}
           trackColor={{ false: '#d1d5db', true: '#8b5cf6' }}
-          thumbColor={value ? '#ffffff' : '#ffffff'}
+          thumbColor="#ffffff"
           ios_backgroundColor="#d1d5db"
         />
       }
@@ -121,14 +121,14 @@ const SettingsSwitch: React.FC<SettingsSwitchProps> = ({
   );
 };
 
+// --- Main Screen ---
 export default function SettingsScreen(): React.JSX.Element {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { theme, setTheme } = useAppTheme();
+  const isDark = theme === 'dark';
 
   // Settings state
   const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(isDark);
   const [biometric, setBiometric] = useState(false);
   const [locationServices, setLocationServices] = useState(true);
   const [autoSync, setAutoSync] = useState(true);
@@ -151,11 +151,10 @@ export default function SettingsScreen(): React.JSX.Element {
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
+        {
+          text: 'Logout',
           style: 'destructive',
           onPress: () => {
-            // Handle logout logic here
             showComingSoon('Logout');
           }
         }
@@ -169,8 +168,8 @@ export default function SettingsScreen(): React.JSX.Element {
       'This action cannot be undone. Are you sure you want to delete your account?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
           onPress: () => {
             showComingSoon('Account Deletion');
@@ -216,21 +215,21 @@ export default function SettingsScreen(): React.JSX.Element {
           ]}>
             ACCOUNT
           </Text>
-          
+
           <SettingsItem
             icon="person-outline"
             title="Profile"
             subtitle="Manage your personal information"
             onPress={() => showComingSoon('Profile Management')}
           />
-          
+
           <SettingsItem
             icon="card-outline"
             title="Payment Methods"
             subtitle="Manage cards and payment options"
             onPress={() => showComingSoon('Payment Methods')}
           />
-          
+
           <SettingsItem
             icon="location-outline"
             title="Addresses"
@@ -247,7 +246,7 @@ export default function SettingsScreen(): React.JSX.Element {
           ]}>
             PREFERENCES
           </Text>
-          
+
           <SettingsSwitch
             icon="notifications-outline"
             title="Push Notifications"
@@ -255,15 +254,15 @@ export default function SettingsScreen(): React.JSX.Element {
             value={notifications}
             onValueChange={setNotifications}
           />
-          
+
           <SettingsSwitch
             icon="moon-outline"
             title="Dark Mode"
             subtitle="Use dark theme"
-            value={darkMode}
-            onValueChange={setDarkMode}
+            value={isDark}
+            onValueChange={(val: boolean) => setTheme(val ? 'dark' : 'light')}
           />
-          
+
           <SettingsSwitch
             icon="finger-print-outline"
             title="Biometric Authentication"
@@ -271,7 +270,7 @@ export default function SettingsScreen(): React.JSX.Element {
             value={biometric}
             onValueChange={setBiometric}
           />
-          
+
           <SettingsSwitch
             icon="location-outline"
             title="Location Services"
@@ -289,21 +288,21 @@ export default function SettingsScreen(): React.JSX.Element {
           ]}>
             APP SETTINGS
           </Text>
-          
+
           <SettingsItem
             icon="language-outline"
             title="Language"
             subtitle="English"
             onPress={() => showComingSoon('Language Selection')}
           />
-          
+
           <SettingsItem
             icon="globe-outline"
             title="Country/Region"
             subtitle="United States"
             onPress={() => showComingSoon('Region Selection')}
           />
-          
+
           <SettingsSwitch
             icon="sync-outline"
             title="Auto Sync"
@@ -321,27 +320,27 @@ export default function SettingsScreen(): React.JSX.Element {
           ]}>
             SUPPORT
           </Text>
-          
+
           <SettingsItem
             icon="help-circle-outline"
             title="Help Center"
             subtitle="Get help and support"
             onPress={() => showComingSoon('Help Center')}
           />
-          
+
           <SettingsItem
             icon="chatbubble-outline"
             title="Contact Us"
             subtitle="Send feedback or report issues"
             onPress={() => showComingSoon('Contact Form')}
           />
-          
+
           <SettingsItem
             icon="document-text-outline"
             title="Terms of Service"
             onPress={() => showComingSoon('Terms of Service')}
           />
-          
+
           <SettingsItem
             icon="shield-outline"
             title="Privacy Policy"
@@ -357,7 +356,7 @@ export default function SettingsScreen(): React.JSX.Element {
           ]}>
             ACCOUNT ACTIONS
           </Text>
-          
+
           <TouchableOpacity
             style={[
               styles.settingsItem,
@@ -375,7 +374,7 @@ export default function SettingsScreen(): React.JSX.Element {
               </Text>
             </View>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[
               styles.settingsItem,

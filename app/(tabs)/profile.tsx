@@ -1,687 +1,643 @@
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-  Alert,
-  Animated,
-  Dimensions,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
-  Switch,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  SafeAreaView,
+  Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+// Use your app's theme context for global dark/light mode
+import { useAppTheme } from '../../constants/ThemeContext';
+import { Colors } from '../../constants/Colors';
 
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  phone: string;
-  joinDate: string;
-  membershipLevel: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
-  totalOrders: number;
-  totalSpent: number;
-  loyaltyPoints: number;
-}
-
-interface ProfileProps {
-  user?: UserProfile;
-  onEditProfile?: () => void;
-  onOrderHistory?: () => void;
-  onSettings?: () => void;
-  onLogout?: () => void;
-  onBack?: () => void;
-}
-
-const { width } = Dimensions.get('window');
-
-const Profile: React.FC<ProfileProps> = ({
-  user,
-  onEditProfile,
-  onOrderHistory,
-  onSettings,
-  onLogout,
-  onBack
+const ProfileItem: React.FC<{
+  icon: string;
+  title: string;
+  subtitle?: string;
+  onPress?: () => void;
+  rightElement?: React.ReactNode;
+  showArrow?: boolean;
+  iconColor?: string;
+  iconBgColor?: string;
+}> = ({
+  icon,
+  title,
+  subtitle,
+  onPress,
+  rightElement,
+  showArrow = true,
+  iconColor,
+  iconBgColor,
 }) => {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [locationEnabled, setLocationEnabled] = useState(false);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
-
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const slideAnim = React.useRef(new Animated.Value(50)).current;
-
-  React.useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
-
-  // Default user data for demo
-  const defaultUser: UserProfile = {
-    id: '1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-    phone: '+1 (555) 123-4567',
-    joinDate: '2023-01-15',
-    membershipLevel: 'Gold',
-    totalOrders: 42,
-    totalSpent: 1284.50,
-    loyaltyPoints: 2847,
-  };
-
-  const userProfile = user || defaultUser;
-
-  const getMembershipColor = (level: string) => {
-    switch (level) {
-      case 'Platinum': return ['#E5E7EB', '#9CA3AF'];
-      case 'Gold': return ['#FCD34D', '#F59E0B'];
-      case 'Silver': return ['#E5E7EB', '#6B7280'];
-      default: return ['#F59E0B', '#D97706'];
-    }
-  };
-
-  const handleLogout = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out of your account?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert('Signed Out', 'You have been successfully signed out.', [
-              { text: 'OK', onPress: () => onLogout?.() }
-            ]);
-          }
-        }
-      ]
-    );
-  };
-
-  const menuItems = [
-    {
-      id: 'edit',
-      title: 'Edit Profile',
-      subtitle: 'Update your personal information',
-      icon: 'person-outline',
-      onPress: onEditProfile,
-      showArrow: true,
-    },
-    {
-      id: 'orders',
-      title: 'Order History',
-      subtitle: `${userProfile.totalOrders} total orders`,
-      icon: 'receipt-outline',
-      onPress: onOrderHistory,
-      showArrow: true,
-    },
-    {
-      id: 'favorites',
-      title: 'My Favorites',
-      subtitle: 'Saved items and wishlists',
-      icon: 'heart-outline',
-      onPress: () => Alert.alert('Coming Soon', 'Favorites feature coming soon!'),
-      showArrow: true,
-    },
-    {
-      id: 'addresses',
-      title: 'Delivery Addresses',
-      subtitle: 'Manage your delivery locations',
-      icon: 'location-outline',
-      onPress: () => Alert.alert('Coming Soon', 'Address management coming soon!'),
-      showArrow: true,
-    },
-    {
-      id: 'payment',
-      title: 'Payment Methods',
-      subtitle: 'Cards and payment options',
-      icon: 'card-outline',
-      onPress: () => Alert.alert('Coming Soon', 'Payment methods coming soon!'),
-      showArrow: true,
-    },
-  ];
-
-  const settingsItems = [
-    {
-      id: 'notifications',
-      title: 'Push Notifications',
-      subtitle: 'Order updates and promotions',
-      icon: 'notifications-outline',
-      value: notificationsEnabled,
-      onToggle: setNotificationsEnabled,
-    },
-    {
-      id: 'location',
-      title: 'Location Services',
-      subtitle: 'For better delivery experience',
-      icon: 'location-outline',
-      value: locationEnabled,
-      onToggle: setLocationEnabled,
-    },
-    {
-      id: 'darkmode',
-      title: 'Dark Mode',
-      subtitle: 'Easier on the eyes',
-      icon: 'moon-outline',
-      value: darkModeEnabled,
-      onToggle: setDarkModeEnabled,
-    },
-  ];
-
-  const supportItems = [
-    {
-      id: 'help',
-      title: 'Help Center',
-      subtitle: 'FAQ and support articles',
-      icon: 'help-circle-outline',
-      onPress: () => Alert.alert('Help Center', 'Opening help center...'),
-    },
-    {
-      id: 'contact',
-      title: 'Contact Support',
-      subtitle: '24/7 customer service',
-      icon: 'chatbubble-outline',
-      onPress: () => Alert.alert('Contact Support', 'Opening chat support...'),
-    },
-    {
-      id: 'feedback',
-      title: 'Send Feedback',
-      subtitle: 'Help us improve the app',
-      icon: 'star-outline',
-      onPress: () => Alert.alert('Feedback', 'Opening feedback form...'),
-    },
-  ];
-
-  const renderMenuItem = (item: any, isLast = false) => (
-    <Animated.View
-      key={item.id}
-      style={[
-        styles.menuItem,
-        !isLast && styles.menuItemBorder,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-        },
-      ]}
-    >
-      <TouchableOpacity
-        style={styles.menuItemContent}
-        onPress={item.onPress}
-        activeOpacity={0.7}
-      >
-        <View style={styles.menuItemLeft}>
-          <View style={styles.menuIconContainer}>
-            <Ionicons name={item.icon as any} size={20} color={colors.primary} />
-          </View>
-          <View style={styles.menuTextContainer}>
-            <Text style={styles.menuItemTitle}>{item.title}</Text>
-            <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
-          </View>
-        </View>
-        {item.showArrow && (
-          <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
-        )}
-      </TouchableOpacity>
-    </Animated.View>
-  );
-
-  const renderSettingItem = (item: any, isLast = false) => (
-    <Animated.View
-      key={item.id}
-      style={[
-        styles.menuItem,
-        !isLast && styles.menuItemBorder,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-        },
-      ]}
-    >
-      <View style={styles.menuItemContent}>
-        <View style={styles.menuItemLeft}>
-          <View style={styles.menuIconContainer}>
-            <Ionicons name={item.icon as any} size={20} color={colors.primary} />
-          </View>
-          <View style={styles.menuTextContainer}>
-            <Text style={styles.menuItemTitle}>{item.title}</Text>
-            <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
-          </View>
-        </View>
-        <Switch
-          value={item.value}
-          onValueChange={item.onToggle}
-          trackColor={{ false: colors.borderColor, true: colors.primaryLight }}
-          thumbColor={item.value ? colors.primary : colors.textLighter}
-        />
-      </View>
-    </Animated.View>
-  );
+  const { theme } = useAppTheme();
+  const isDark = theme === 'dark';
+  const palette = Colors[theme];
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <LinearGradient
-        colors={[colors.primary, colors.primaryDark]}
-        style={styles.header}
-      >
-        <View style={styles.headerContent}>
-          {onBack && (
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color={colors.backgroundCard} />
-            </TouchableOpacity>
+    <TouchableOpacity
+      style={[
+        styles.profileItem,
+        { backgroundColor: palette.card }
+      ]}
+      onPress={onPress}
+      activeOpacity={0.7}
+      disabled={!onPress}
+    >
+      <View style={styles.profileItemLeft}>
+        <View style={[
+          styles.iconContainer,
+          { backgroundColor: iconBgColor || (theme === 'dark' ? '#374151' : '#f3f4f6') }
+        ]}>
+          <Ionicons
+            name={icon as any}
+            size={20}
+            color={iconColor || palette.icon}
+          />
+        </View>
+        <View style={styles.textContainer}>
+          <Text style={[
+            styles.profileTitle,
+            { color: palette.text }
+          ]}>
+            {title}
+          </Text>
+          {subtitle && (
+            <Text style={[
+              styles.profileSubtitle,
+              { color: palette.icon }
+            ]}>
+              {subtitle}
+            </Text>
           )}
-          <Text style={styles.headerTitle}>Profile</Text>
-          <TouchableOpacity 
-            style={styles.settingsButton}
-            onPress={onSettings}
-          >
-            <Ionicons name="settings-outline" size={24} color={colors.backgroundCard} />
-          </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
+      <View style={styles.profileItemRight}>
+        {rightElement}
+        {showArrow && !rightElement && (
+          <Ionicons
+            name="chevron-forward"
+            size={16}
+            color={palette.icon}
+          />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+};
 
-      <ScrollView 
-        style={styles.scrollView} 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Profile Card */}
-        <Animated.View
-          style={[
-            styles.profileCard,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={[colors.backgroundCard, colors.backgroundHover]}
-            style={styles.profileCardGradient}
-          >
-            {/* Avatar and Basic Info */}
-            <View style={styles.profileHeader}>
-              <View style={styles.avatarContainer}>
-                <Image source={{ uri: userProfile.avatar }} style={styles.avatar} />
-                <View style={styles.avatarBadge}>
-                  <LinearGradient
-                    colors={getMembershipColor(userProfile.membershipLevel)}
-                    style={styles.membershipBadge}
-                  >
-                    <Text style={styles.membershipText}>
-                      {userProfile.membershipLevel.charAt(0)}
-                    </Text>
-                  </LinearGradient>
-                </View>
-              </View>
-              <View style={styles.profileInfo}>
-                <Text style={styles.userName}>{userProfile.name}</Text>
-                <Text style={styles.userEmail}>{userProfile.email}</Text>
-                <View style={styles.membershipContainer}>
-                  <Ionicons name="diamond" size={12} color={colors.secondary} />
-                  <Text style={styles.membershipLevel}>
-                    {userProfile.membershipLevel} Member
-                  </Text>
-                </View>
-              </View>
-            </View>
+const StatCard: React.FC<{
+  title: string;
+  value: string;
+  icon: string;
+  color: string;
+}> = ({ title, value, icon, color }) => {
+  const { theme } = useAppTheme();
+  const isDark = theme === 'dark';
+  const palette = Colors[theme];
 
-            {/* Stats */}
-            <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{userProfile.totalOrders}</Text>
-                <Text style={styles.statLabel}>Orders</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>${userProfile.totalSpent.toFixed(0)}</Text>
-                <Text style={styles.statLabel}>Spent</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{userProfile.loyaltyPoints.toLocaleString()}</Text>
-                <Text style={styles.statLabel}>Points</Text>
-              </View>
-            </View>
-          </LinearGradient>
-        </Animated.View>
-
-        {/* Menu Sections */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <View style={styles.menuContainer}>
-            {menuItems.map((item, index) => 
-              renderMenuItem(item, index === menuItems.length - 1)
-            )}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-          <View style={styles.menuContainer}>
-            {settingsItems.map((item, index) => 
-              renderSettingItem(item, index === settingsItems.length - 1)
-            )}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
-          <View style={styles.menuContainer}>
-            {supportItems.map((item, index) => 
-              renderMenuItem(item, index === supportItems.length - 1)
-            )}
-          </View>
-        </View>
-
-        {/* Logout Button */}
-        <Animated.View
-          style={[
-            styles.logoutContainer,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        >
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color={colors.error} />
-            <Text style={styles.logoutText}>Sign Out</Text>
-          </TouchableOpacity>
-        </Animated.View>
-
-        {/* App Info */}
-        <View style={styles.appInfo}>
-          <Text style={styles.appInfoText}>Version 1.0.0</Text>
-          <Text style={styles.appInfoText}>© 2024 Your App Name</Text>
-        </View>
-      </ScrollView>
+  return (
+    <View style={[
+      styles.statCard,
+      { backgroundColor: palette.card }
+    ]}>
+      <View style={[styles.statIconContainer, { backgroundColor: color + '20' }]}>
+        <Ionicons name={icon as any} size={24} color={color} />
+      </View>
+      <Text style={[
+        styles.statValue,
+        { color: palette.text }
+      ]}>
+        {value}
+      </Text>
+      <Text style={[
+        styles.statTitle,
+        { color: palette.icon }
+      ]}>
+        {title}
+      </Text>
     </View>
   );
 };
 
-// Enhanced Color Palette
-const colors = {
-  primary: '#3f51b5',
-  primaryLight: '#757de8',
-  primaryDark: '#002984',
-  secondary: '#ff4081',
-  secondaryLight: '#ff79b0',
-  secondaryDark: '#c60055',
-  error: '#f44336',
-  textColor: '#333',
-  textLight: '#666',
-  textLighter: '#888',
-  backgroundMain: '#f5f7fa',
-  backgroundCard: '#fff',
-  backgroundHover: '#f0f2f5',
-  borderColor: '#e1e4e8',
-  borderRadius: 12,
-  borderRadiusLg: 16,
-  spacingXs: 4,
-  spacingSm: 8,
-  spacingMd: 16,
-  spacingLg: 24,
-  spacingXl: 32,
-  fontSizeXs: 12,
-  fontSizeSm: 14,
-  fontSizeMd: 16,
-  fontSizeLg: 18,
-  fontSizeXl: 20,
-  fontSizeXxl: 24,
-  fontWeightMedium: '500' as const,
-  fontWeightBold: '700' as const,
-  fontWeightExtraBold: '800' as const,
-};
+export default function ProfileScreen(): React.JSX.Element {
+  const router = useRouter();
+  const { theme } = useAppTheme();
+  const isDark = theme === 'dark';
+  const palette = Colors[theme];
+
+  const [userInfo] = useState({
+    name: 'Sarah Johnson',
+    email: 'sarah.johnson@email.com',
+    phone: '+1 (555) 123-4567',
+    memberSince: 'Member since March 2023',
+    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=150&h=150&fit=crop&crop=face',
+  });
+
+  const handleBackPress = () => {
+    router.back();
+  };
+
+  const handleSettingsPress = () => {
+    router.push('/settings');
+  };
+
+  const showComingSoon = (feature: string) => {
+    Alert.alert(
+      'Coming Soon',
+      `${feature} feature will be available in a future update.`,
+      [{ text: 'OK', style: 'default' }]
+    );
+  };
+
+  const handleEditProfile = () => {
+    showComingSoon('Profile Editing');
+  };
+
+  return (
+    <SafeAreaView style={[
+      styles.container,
+      { backgroundColor: palette.background }
+    ]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleBackPress}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={palette.text}
+          />
+        </TouchableOpacity>
+        <Text style={[
+          styles.headerTitle,
+          { color: palette.text }
+        ]}>
+          Profile
+        </Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={handleSettingsPress}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="settings-outline"
+              size={24}
+              color={palette.tint}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={handleEditProfile}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="create-outline"
+              size={24}
+              color={palette.tint}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Profile Header Card */}
+        <View style={styles.profileHeaderContainer}>
+          <LinearGradient
+            colors={palette.cardGradient as [string, string]}
+            style={styles.profileHeaderGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.profileHeader}>
+              <View style={styles.avatarContainer}>
+                <Image
+                  source={{ uri: userInfo.avatar }}
+                  style={styles.avatar}
+                />
+                <TouchableOpacity 
+                  style={styles.avatarEditButton}
+                  onPress={() => showComingSoon('Avatar Upload')}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="camera" size={16} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.userName}>{userInfo.name}</Text>
+              <Text style={styles.userEmail}>{userInfo.email}</Text>
+              <Text style={styles.memberSince}>{userInfo.memberSince}</Text>
+            </View>
+          </LinearGradient>
+        </View>
+
+        {/* Stats Section */}
+        <View style={styles.statsContainer}>
+          <StatCard
+            title="Total Orders"
+            value="47"
+            icon="bag-outline"
+            color="#10b981"
+          />
+          <StatCard
+            title="Wishlist Items"
+            value="23"
+            icon="heart-outline"
+            color="#f59e0b"
+          />
+          <StatCard
+            title="Reward Points"
+            value="1,248"
+            icon="star-outline"
+            color="#8b5cf6"
+          />
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={[
+            styles.sectionTitle,
+            { color: palette.icon }
+          ]}>
+            QUICK ACTIONS
+          </Text>
+          
+          <ProfileItem
+            icon="bag-outline"
+            title="Order History"
+            subtitle="View all your past orders"
+            iconColor="#10b981"
+            iconBgColor="#d1fae5"
+            onPress={() => showComingSoon('Order History')}
+          />
+          
+          <ProfileItem
+            icon="heart-outline"
+            title="Wishlist"
+            subtitle="23 items saved"
+            iconColor="#f59e0b"
+            iconBgColor="#fef3c7"
+            onPress={() => showComingSoon('Wishlist')}
+          />
+          
+          <ProfileItem
+            icon="location-outline"
+            title="Addresses"
+            subtitle="Manage shipping addresses"
+            iconColor="#3b82f6"
+            iconBgColor="#dbeafe"
+            onPress={() => showComingSoon('Address Management')}
+          />
+          
+          <ProfileItem
+            icon="card-outline"
+            title="Payment Methods"
+            subtitle="Manage cards and wallets"
+            iconColor="#8b5cf6"
+            iconBgColor="#ede9fe"
+            onPress={() => showComingSoon('Payment Methods')}
+          />
+        </View>
+
+        {/* Account Information */}
+        <View style={styles.section}>
+          <Text style={[
+            styles.sectionTitle,
+            { color: palette.icon }
+          ]}>
+            ACCOUNT INFORMATION
+          </Text>
+          
+          <ProfileItem
+            icon="person-outline"
+            title="Personal Information"
+            subtitle="Name, email, phone number"
+            onPress={() => showComingSoon('Personal Info')}
+          />
+          
+          <ProfileItem
+            icon="key-outline"
+            title="Security"
+            subtitle="Password and authentication"
+            onPress={() => showComingSoon('Security Settings')}
+          />
+          
+          <ProfileItem
+            icon="notifications-outline"
+            title="Notifications"
+            subtitle="Manage your preferences"
+            onPress={() => showComingSoon('Notification Settings')}
+          />
+        </View>
+
+        {/* Rewards & Benefits */}
+        <View style={styles.section}>
+          <Text style={[
+            styles.sectionTitle,
+            { color: palette.icon }
+          ]}>
+            REWARDS & BENEFITS
+          </Text>
+          
+          <ProfileItem
+            icon="star-outline"
+            title="Loyalty Program"
+            subtitle="Gold Member • 1,248 points"
+            rightElement={
+              <View style={styles.loyaltyBadge}>
+                <Text style={styles.loyaltyBadgeText}>GOLD</Text>
+              </View>
+            }
+            showArrow={true}
+            onPress={() => showComingSoon('Loyalty Program')}
+          />
+          
+          <ProfileItem
+            icon="gift-outline"
+            title="Referrals"
+            subtitle="Invite friends and earn rewards"
+            onPress={() => showComingSoon('Referral Program')}
+          />
+          
+          <ProfileItem
+            icon="pricetag-outline"
+            title="Coupons & Offers"
+            subtitle="View available discounts"
+            onPress={() => showComingSoon('Coupons')}
+          />
+        </View>
+
+        {/* Support & Feedback */}
+        <View style={styles.section}>
+          <Text style={[
+            styles.sectionTitle,
+            { color: palette.icon }
+          ]}>
+            SUPPORT & FEEDBACK
+          </Text>
+          
+          <ProfileItem
+            icon="help-circle-outline"
+            title="Help Center"
+            subtitle="FAQs and support articles"
+            onPress={() => showComingSoon('Help Center')}
+          />
+          
+          <ProfileItem
+            icon="chatbubble-outline"
+            title="Contact Support"
+            subtitle="Get help from our team"
+            onPress={() => showComingSoon('Contact Support')}
+          />
+          
+          <ProfileItem
+            icon="star-half-outline"
+            title="Rate Our App"
+            subtitle="Share your feedback"
+            onPress={() => showComingSoon('App Rating')}
+          />
+        </View>
+
+        {/* App Information */}
+        <View style={styles.section}>
+          <Text style={[
+            styles.sectionTitle,
+            { color: palette.icon }
+          ]}>
+            APP INFORMATION
+          </Text>
+          
+          <ProfileItem
+            icon="document-text-outline"
+            title="Terms of Service"
+            onPress={() => showComingSoon('Terms of Service')}
+          />
+          
+          <ProfileItem
+            icon="shield-outline"
+            title="Privacy Policy"
+            onPress={() => showComingSoon('Privacy Policy')}
+          />
+          
+          <ProfileItem
+            icon="information-circle-outline"
+            title="About"
+            subtitle="Version 1.0.0"
+            showArrow={false}
+            onPress={() => showComingSoon('About')}
+          />
+        </View>
+
+        {/* Bottom Spacing */}
+        <View style={styles.bottomSpacing} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundMain,
   },
   header: {
-    paddingTop: 50,
-    paddingBottom: colors.spacingLg,
-    paddingHorizontal: colors.spacingLg,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
+    marginLeft: -8,
   },
   headerTitle: {
-    fontSize: colors.fontSizeXxl,
-    fontWeight: colors.fontWeightExtraBold,
-    color: colors.backgroundCard,
-    flex: 1,
-    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: '600' as const,
+  },
+  headerRight: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
   },
   settingsButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
+    marginRight: 8,
+  },
+  editButton: {
+    padding: 8,
+    marginRight: -8,
   },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: colors.spacingXl,
+  profileHeaderContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
-  profileCard: {
-    margin: colors.spacingLg,
-    borderRadius: colors.borderRadiusLg,
+  profileHeaderGradient: {
+    borderRadius: 20,
     overflow: 'hidden',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-  },
-  profileCardGradient: {
-    padding: colors.spacingLg,
   },
   profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: colors.spacingLg,
+    alignItems: 'center' as const,
+    paddingVertical: 32,
+    paddingHorizontal: 20,
   },
   avatarContainer: {
-    position: 'relative',
-    marginRight: colors.spacingLg,
+    position: 'relative' as const,
+    marginBottom: 16,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  avatarEditButton: {
+    position: 'absolute' as const,
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 16,
+    width: 32,
+    height: 32,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
     borderWidth: 3,
-    borderColor: colors.backgroundCard,
-  },
-  avatarBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-  },
-  membershipBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.backgroundCard,
-  },
-  membershipText: {
-    fontSize: colors.fontSizeXs,
-    fontWeight: colors.fontWeightExtraBold,
-    color: colors.backgroundCard,
-  },
-  profileInfo: {
-    flex: 1,
+    borderColor: '#ffffff',
   },
   userName: {
-    fontSize: colors.fontSizeXl,
-    fontWeight: colors.fontWeightExtraBold,
-    color: colors.textColor,
-    marginBottom: colors.spacingXs,
+    fontSize: 24,
+    fontWeight: '700' as const,
+    color: '#ffffff',
+    marginBottom: 4,
   },
   userEmail: {
-    fontSize: colors.fontSizeMd,
-    color: colors.textLight,
-    marginBottom: colors.spacingSm,
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 8,
   },
-  membershipContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  membershipLevel: {
-    fontSize: colors.fontSizeSm,
-    fontWeight: colors.fontWeightMedium,
-    color: colors.secondary,
-    marginLeft: colors.spacingXs,
+  memberSince: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
   },
   statsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingTop: colors.spacingLg,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderColor,
+    flexDirection: 'row' as const,
+    paddingHorizontal: 20,
+    marginTop: 20,
+    gap: 12,
   },
-  statItem: {
-    alignItems: 'center',
+  statCard: {
+    flex: 1,
+    alignItems: 'center' as const,
+    paddingVertical: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  statIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    marginBottom: 12,
   },
   statValue: {
-    fontSize: colors.fontSizeXl,
-    fontWeight: colors.fontWeightExtraBold,
-    color: colors.primary,
-    marginBottom: colors.spacingXs,
+    fontSize: 20,
+    fontWeight: '700' as const,
+    marginBottom: 4,
   },
-  statLabel: {
-    fontSize: colors.fontSizeSm,
-    color: colors.textLight,
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: colors.borderColor,
+  statTitle: {
+    fontSize: 12,
+    fontWeight: '500' as const,
+    textAlign: 'center' as const,
   },
   section: {
-    marginTop: colors.spacingLg,
+    marginTop: 32,
+    paddingHorizontal: 20,
   },
   sectionTitle: {
-    fontSize: colors.fontSizeLg,
-    fontWeight: colors.fontWeightBold,
-    color: colors.textColor,
-    marginHorizontal: colors.spacingLg,
-    marginBottom: colors.spacingMd,
+    fontSize: 13,
+    fontWeight: '600' as const,
+    marginBottom: 12,
+    letterSpacing: 0.5,
   },
-  menuContainer: {
-    backgroundColor: colors.backgroundCard,
-    marginHorizontal: colors.spacingLg,
-    borderRadius: colors.borderRadiusLg,
-    overflow: 'hidden',
-    elevation: 2,
+  profileItem: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  menuItem: {
-    backgroundColor: colors.backgroundCard,
-  },
-  menuItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderColor,
-  },
-  menuItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: colors.spacingLg,
-  },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  profileItemLeft: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
     flex: 1,
   },
-  menuIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary + '10',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: colors.spacingMd,
+  profileItemRight: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
   },
-  menuTextContainer: {
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    marginRight: 12,
+  },
+  textContainer: {
     flex: 1,
   },
-  menuItemTitle: {
-    fontSize: colors.fontSizeMd,
-    fontWeight: colors.fontWeightMedium,
-    color: colors.textColor,
+  profileTitle: {
+    fontSize: 16,
+    fontWeight: '500' as const,
     marginBottom: 2,
   },
-  menuItemSubtitle: {
-    fontSize: colors.fontSizeSm,
-    color: colors.textLight,
+  profileSubtitle: {
+    fontSize: 14,
+    lineHeight: 18,
   },
-  logoutContainer: {
-    marginHorizontal: colors.spacingLg,
-    marginTop: colors.spacingXl,
+  loyaltyBadge: {
+    backgroundColor: '#f59e0b',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
   },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.backgroundCard,
-    padding: colors.spacingLg,
-    borderRadius: colors.borderRadiusLg,
-    borderWidth: 1,
-    borderColor: colors.error + '20',
+  loyaltyBadgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600' as const,
   },
-  logoutText: {
-    fontSize: colors.fontSizeMd,
-    fontWeight: colors.fontWeightMedium,
-    color: colors.error,
-    marginLeft: colors.spacingSm,
-  },
-  appInfo: {
-    alignItems: 'center',
-    marginTop: colors.spacingXl,
-    marginBottom: colors.spacingLg,
-  },
-  appInfoText: {
-    fontSize: colors.fontSizeXs,
-    color: colors.textLighter,
-    marginBottom: colors.spacingXs,
+  bottomSpacing: {
+    height: 100,
   },
 });
-
-export default Profile;

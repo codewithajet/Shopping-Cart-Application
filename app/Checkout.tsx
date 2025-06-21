@@ -17,25 +17,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCart } from '../components/CartContext';
-
+import { useAppTheme } from '../constants/ThemeContext';
+import { Colors } from '../constants/Colors';
 import type { CartItemType } from '../data/types';
 
-const colors = {
-  primary: '#3f51b5',
-  secondary: '#ff4081',
-  backgroundCard: '#fff',
-  backgroundMain: '#f5f7fa',
-  textColor: '#333',
-  textLight: '#666',
-  borderRadiusLg: 16,
-  fontSizeXxl: 24,
+// Sizing and spacing constants
+const S = {
+  borderRadiusLg: 18,
+  fontSizeXxl: 26,
   fontSizeLg: 18,
   fontSizeMd: 16,
-  spacingLg: 24,
+  spacingLg: 28,
   spacingMd: 16,
   spacingSm: 8,
 };
-
 
 const deliveryMethods = ['Standard', 'Express', 'Pickup'];
 const paymentMethods = ['card', 'paypal', 'cod'];
@@ -48,6 +43,10 @@ const Checkout: React.FC = () => {
   const total = subtotal + shippingCost + taxAmount;
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  // THEME CONTEXT!
+  const { theme } = useAppTheme();
+  const palette = Colors[theme];
 
   // Form state
   const [customerName, setCustomerName] = useState('');
@@ -121,78 +120,76 @@ const Checkout: React.FC = () => {
         throw new Error(data.message || 'Order failed');
       }
 
-      // Notification: success
-      // If using Toast:
-      // Toast.show({ type: 'success', text1: 'Order submitted successfully!', position: 'bottom' });
-      // Or use Alert:
       Alert.alert('Success', `Order #${data.order_number} submitted successfully!`);
 
       clearCart();
       router.replace('/'); // Go back to home after order
     } catch (err: any) {
       setLoading(false);
-      // Notification: error
-      // Toast.show({ type: 'error', text1: String(err.message || 'Could not place order.') });
       Alert.alert('Order Error', err.message || 'Could not place order.');
     }
   };
 
   return (
-    <LinearGradient colors={[colors.backgroundMain, '#fff']} style={styles.container}>
+    <LinearGradient colors={palette.cardGradient as [string, string]} style={styles.container}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: palette.border }]}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={28} color={colors.primary} />
+            <Ionicons name="arrow-back" size={28} color={palette.tint} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Checkout</Text>
+          <Text style={[styles.headerTitle, { color: palette.tint }]}>Checkout</Text>
         </View>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={[styles.content, { backgroundColor: 'transparent' }]} keyboardShouldPersistTaps="handled">
           {items.length === 0 ? (
-            <Text style={styles.emptyText}>Your cart is empty.</Text>
+            <Text style={[styles.emptyText, { color: palette.icon }]}>Your cart is empty.</Text>
           ) : (
             <>
               {/* Order Summary */}
-              {items.map((item: CartItemType) => (
-                <View key={item.id} style={styles.itemRow}>
-                  <Text style={styles.itemName}>
-                    {item.name} x {item.quantity}
-                  </Text>
-                  <Text style={styles.itemPrice}>${(item.price * item.quantity).toFixed(2)}</Text>
+              <View style={styles.summarySection}>
+                <Text style={[styles.sectionTitle, { color: palette.text }]}>Order Summary</Text>
+                {items.map((item: CartItemType) => (
+                  <View key={item.id} style={[styles.itemRow, { borderBottomColor: palette.border }]}>
+                    <Text style={[styles.itemName, { color: palette.text }]}>{item.name} x {item.quantity}</Text>
+                    <Text style={[styles.itemPrice, { color: palette.text }]}>{(item.price * item.quantity).toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</Text>
+                  </View>
+                ))}
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: palette.icon }]}>Subtotal:</Text>
+                  <Text style={[styles.summaryValue, { color: palette.text }]}>{subtotal.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</Text>
                 </View>
-              ))}
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Subtotal:</Text>
-                <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Shipping:</Text>
-                <Text style={styles.summaryValue}>${shippingCost.toFixed(2)}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Tax:</Text>
-                <Text style={styles.summaryValue}>${taxAmount.toFixed(2)}</Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: colors.primary }]}>Total:</Text>
-                <Text style={[styles.summaryValue, { color: colors.primary }]}>${total.toFixed(2)}</Text>
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: palette.icon }]}>Shipping:</Text>
+                  <Text style={[styles.summaryValue, { color: palette.text }]}>{shippingCost.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: palette.icon }]}>Tax:</Text>
+                  <Text style={[styles.summaryValue, { color: palette.text }]}>{taxAmount.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { color: palette.tint, fontWeight: 'bold' }]}>Total:</Text>
+                  <Text style={[styles.summaryValue, { color: palette.tint, fontWeight: 'bold' }]}>{total.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}</Text>
+                </View>
               </View>
 
               {/* Form */}
-              <View style={styles.formSection}>
+              <View style={[styles.formSection, { backgroundColor: palette.card, shadowColor: palette.shadow }]}>
+                <Text style={[styles.sectionTitle, { color: palette.text }]}>Shipping Details</Text>
                 <Text style={styles.formLabel}>Name*</Text>
                 <TextInput
                   value={customerName}
                   onChangeText={setCustomerName}
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: palette.background, borderColor: palette.border, color: palette.text }]}
                   placeholder="Full Name"
+                  placeholderTextColor={palette.icon}
                   autoCapitalize="words"
                 />
                 <Text style={styles.formLabel}>Email*</Text>
                 <TextInput
                   value={customerEmail}
                   onChangeText={setCustomerEmail}
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: palette.background, borderColor: palette.border, color: palette.text }]}
                   placeholder="Email"
+                  placeholderTextColor={palette.icon}
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
@@ -200,63 +197,70 @@ const Checkout: React.FC = () => {
                 <TextInput
                   value={customerPhone}
                   onChangeText={setCustomerPhone}
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: palette.background, borderColor: palette.border, color: palette.text }]}
                   placeholder="Phone Number"
+                  placeholderTextColor={palette.icon}
                   keyboardType="phone-pad"
                 />
                 <Text style={styles.formLabel}>Shipping Address*</Text>
                 <TextInput
                   value={shippingAddress}
                   onChangeText={setShippingAddress}
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: palette.background, borderColor: palette.border, color: palette.text }]}
                   placeholder="Address"
+                  placeholderTextColor={palette.icon}
                   autoCapitalize="words"
                 />
                 <Text style={styles.formLabel}>City*</Text>
                 <TextInput
                   value={shippingCity}
                   onChangeText={setShippingCity}
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: palette.background, borderColor: palette.border, color: palette.text }]}
                   placeholder="City"
+                  placeholderTextColor={palette.icon}
                   autoCapitalize="words"
                 />
                 <Text style={styles.formLabel}>State*</Text>
                 <TextInput
                   value={shippingState}
                   onChangeText={setShippingState}
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: palette.background, borderColor: palette.border, color: palette.text }]}
                   placeholder="State"
+                  placeholderTextColor={palette.icon}
                   autoCapitalize="words"
                 />
                 <Text style={styles.formLabel}>Country*</Text>
                 <TextInput
                   value={shippingCountry}
                   onChangeText={setShippingCountry}
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: palette.background, borderColor: palette.border, color: palette.text }]}
                   placeholder="Country"
+                  placeholderTextColor={palette.icon}
                   autoCapitalize="words"
                 />
                 <Text style={styles.formLabel}>Zip Code*</Text>
                 <TextInput
                   value={shippingZipCode}
                   onChangeText={setShippingZipCode}
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: palette.background, borderColor: palette.border, color: palette.text }]}
                   placeholder="Zip Code"
+                  placeholderTextColor={palette.icon}
                   keyboardType="numeric"
                 />
                 <Text style={styles.formLabel}>Delivery Method*</Text>
-                <View style={{ flexDirection: 'row', marginBottom: colors.spacingSm }}>
+                <View style={{ flexDirection: 'row', marginBottom: S.spacingSm }}>
                   {deliveryMethods.map(method => (
                     <TouchableOpacity
                       key={method}
                       style={[
                         styles.radio,
+                        { borderColor: palette.tint, backgroundColor: deliveryMethod === method ? palette.tint : palette.card },
                         deliveryMethod === method && styles.radioSelected,
                       ]}
                       onPress={() => setDeliveryMethod(method)}
                     >
                       <Text style={{
-                        color: deliveryMethod === method ? '#fff' : colors.primary,
+                        color: deliveryMethod === method ? '#fff' : palette.tint,
                         fontWeight: 'bold'
                       }}>{method}</Text>
                     </TouchableOpacity>
@@ -266,13 +270,14 @@ const Checkout: React.FC = () => {
                 <TextInput
                   value={deliveryInstructions}
                   onChangeText={setDeliveryInstructions}
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: palette.background, borderColor: palette.border, color: palette.text }]}
                   placeholder="Any instructions?"
+                  placeholderTextColor={palette.icon}
                   autoCapitalize="sentences"
                 />
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: colors.spacingSm }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: S.spacingSm }}>
                   <Switch value={isGift} onValueChange={setIsGift} />
-                  <Text style={{ marginLeft: colors.spacingSm }}>Is this a gift?</Text>
+                  <Text style={{ marginLeft: S.spacingSm, color: palette.text }}>Is this a gift?</Text>
                 </View>
                 {isGift && (
                   <>
@@ -280,8 +285,9 @@ const Checkout: React.FC = () => {
                     <TextInput
                       value={giftMessage}
                       onChangeText={setGiftMessage}
-                      style={styles.input}
+                      style={[styles.input, { backgroundColor: palette.background, borderColor: palette.border, color: palette.text }]}
                       placeholder="Gift message"
+                      placeholderTextColor={palette.icon}
                       autoCapitalize="sentences"
                     />
                   </>
@@ -290,23 +296,25 @@ const Checkout: React.FC = () => {
                 <TextInput
                   value={couponCode}
                   onChangeText={setCouponCode}
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: palette.background, borderColor: palette.border, color: palette.text }]}
                   placeholder="Coupon code (optional)"
+                  placeholderTextColor={palette.icon}
                   autoCapitalize="characters"
                 />
                 <Text style={styles.formLabel}>Payment Method*</Text>
-                <View style={{ flexDirection: 'row', marginBottom: colors.spacingSm }}>
+                <View style={{ flexDirection: 'row', marginBottom: S.spacingSm }}>
                   {paymentMethods.map(method => (
                     <TouchableOpacity
                       key={method}
                       style={[
                         styles.radio,
+                        { borderColor: palette.tint, backgroundColor: paymentMethod === method ? palette.tint : palette.card },
                         paymentMethod === method && styles.radioSelected,
                       ]}
                       onPress={() => setPaymentMethod(method)}
                     >
                       <Text style={{
-                        color: paymentMethod === method ? '#fff' : colors.primary,
+                        color: paymentMethod === method ? '#fff' : palette.tint,
                         fontWeight: 'bold'
                       }}>{method.toUpperCase()}</Text>
                     </TouchableOpacity>
@@ -318,8 +326,9 @@ const Checkout: React.FC = () => {
                 style={styles.placeOrderButton}
                 onPress={handlePlaceOrder}
                 disabled={loading}
+                activeOpacity={0.92}
               >
-                <LinearGradient colors={[colors.primary, colors.secondary]} style={styles.placeOrderGradient}>
+                <LinearGradient colors={[palette.tint, palette.accent]} style={styles.placeOrderGradient}>
                   {loading ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
@@ -338,115 +347,124 @@ const Checkout: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    flexDirection: 'row', alignItems: 'center', padding: colors.spacingLg,
-    borderBottomWidth: 1, borderBottomColor: '#eee',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: S.spacingLg,
+    borderBottomWidth: 1.5,
   },
   headerTitle: {
-    fontSize: colors.fontSizeXxl,
+    fontSize: S.fontSizeXxl,
     fontWeight: 'bold',
-    color: colors.primary,
-    marginLeft: colors.spacingMd,
+    marginLeft: S.spacingMd,
   },
   content: {
-    padding: colors.spacingLg,
+    padding: S.spacingLg,
     paddingBottom: 40,
   },
   emptyText: {
     textAlign: 'center',
-    marginTop: colors.spacingLg,
-    fontSize: colors.fontSizeLg,
-    color: colors.textLight,
+    marginTop: S.spacingLg,
+    fontSize: S.fontSizeLg,
+    fontWeight: '600',
+  },
+  summarySection: {
+    marginBottom: S.spacingLg,
+    backgroundColor: 'transparent',
+  },
+  sectionTitle: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    letterSpacing: 0.2,
   },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: colors.spacingMd,
+    marginBottom: S.spacingSm,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingBottom: colors.spacingSm,
+    paddingBottom: S.spacingSm - 2,
   },
   itemName: {
-    fontSize: colors.fontSizeMd,
-    color: colors.textColor,
+    fontSize: S.fontSizeMd,
   },
   itemPrice: {
-    fontSize: colors.fontSizeMd,
-    color: colors.textColor,
+    fontSize: S.fontSizeMd,
     fontWeight: 'bold',
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 2,
-    marginBottom: 2,
-    borderTopWidth: 0,
-    borderTopColor: '#eee',
+    marginVertical: 2,
     paddingTop: 0,
   },
   summaryLabel: {
-    fontSize: colors.fontSizeMd,
+    fontSize: S.fontSizeMd,
     fontWeight: '600',
-    color: colors.textLight,
   },
   summaryValue: {
-    fontSize: colors.fontSizeMd,
+    fontSize: S.fontSizeMd,
     fontWeight: '700',
-    color: colors.textColor,
   },
   formSection: {
-    backgroundColor: colors.backgroundCard,
-    borderRadius: colors.borderRadiusLg,
-    padding: colors.spacingMd,
-    marginBottom: colors.spacingLg,
-    shadowColor: '#000',
+    borderRadius: S.borderRadiusLg,
+    padding: S.spacingMd,
+    marginBottom: S.spacingLg,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
     elevation: 2,
   },
+  sectionHeader: {
+    fontWeight: 'bold',
+    fontSize: S.fontSizeLg,
+    marginBottom: 8,
+  },
   formLabel: {
-    fontSize: colors.fontSizeMd,
-    color: colors.textColor,
-    marginTop: colors.spacingSm,
+    fontSize: S.fontSizeMd,
+    marginTop: S.spacingSm,
     marginBottom: 2,
     fontWeight: '600',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#eee',
     borderRadius: 10,
     padding: 10,
-    marginBottom: colors.spacingSm,
+    marginBottom: S.spacingSm,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
   },
   radio: {
-    borderWidth: 1,
-    borderColor: colors.primary,
+    borderWidth: 1.3,
     borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    marginRight: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 17,
+    marginRight: 10,
     backgroundColor: '#fff',
+    marginBottom: 2,
+    marginTop: 2,
+    minWidth: 78,
+    alignItems: 'center',
   },
   radioSelected: {
-    backgroundColor: colors.primary,
-    borderColor: '#fff',
+    elevation: 2,
+    shadowColor: '#6366f1',
   },
   placeOrderButton: {
-    borderRadius: 20,
+    borderRadius: 22,
     overflow: 'hidden',
-    marginTop: 4,
+    marginTop: 8,
+    marginBottom: 16,
+    elevation: 2,
   },
   placeOrderGradient: {
-    paddingVertical: 16,
+    paddingVertical: 17,
     alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: 22,
   },
   placeOrderText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: colors.fontSizeLg,
+    fontSize: S.fontSizeLg,
+    letterSpacing: 0.18,
   },
 });
 

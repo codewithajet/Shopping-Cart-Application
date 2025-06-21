@@ -36,7 +36,6 @@ export async function fetchProducts(params?: {
     if (!response.ok) throw new Error("Failed to fetch products");
     const data = await response.json();
     const products: any[] = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
-
     return products.map((p) => ({
       id: p.id,
       name: p.name,

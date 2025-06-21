@@ -7,59 +7,94 @@ import {
   Image,
   FlatList,
   Dimensions,
+  useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-
-export interface Product {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  category_id: number;
-  category_name: string;
-  description: string;
-  rating: number;
-  fullDescription?: string;
-  specifications?: { [key: string]: string };
-  inStock?: boolean;
-  stockCount?: number;
-  images?: string[];
-}
+import { Product } from '../data/products';
 
 export interface ProductListProps {
   products: Product[];
-  onAddToCart: (product: Product) => void;
+  onAddToCart: (product: Product & { category: string }) => void;
   onProductPress?: (product: Product) => void;
+  forcedTheme?: 'light' | 'dark'; // Optional prop to force a specific theme
 }
 
 const { width } = Dimensions.get('window');
 const itemWidth = (width - 48) / 2;
 
-const colors = {
+// Theme definitions
+const lightTheme = {
+  background: '#f9fafb',
+  cardBackground: '#ffffff',
+  cardGradient: ['#ffffff', '#f8fafc'] as [string, string],
+  textPrimary: '#1f2937',
+  textSecondary: '#6b7280',
+  iconContainer: '#f3f4f6',
+  border: 'rgba(0,0,0,0.1)',
+  shadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+};
+
+const darkTheme = {
+  background: '#111827',
+  cardBackground: '#1f2937',
+  cardGradient: ['#1f2937', '#374151'] as [string, string],
+  textPrimary: '#f9fafb',
+  textSecondary: '#9ca3af',
+  iconContainer: '#374151',
+  border: 'rgba(255,255,255,0.1)',
+  shadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+};
+
+const commonColors = {
   primary: '#667eea',
+  gradient: ['#667eea', '#764ba2'] as [string, string],
+  success: '#10b981',
   warning: '#f59e0b',
-  buttonGradient: ['#667eea', '#764ba2'] as [string, string],
+  purple: '#8b5cf6',
+  blue: '#3b82f6',
+  red: '#dc2626',
+  // Spacing
   borderRadiusLarge: 20,
+  borderRadiusMedium: 12,
+  borderRadiusSmall: 8,
   spacingXs: 4,
   spacingSm: 8,
   spacingMd: 16,
+  spacingLg: 24,
+  // Typography
   fontSizeXs: 12,
   fontSizeSm: 14,
   fontSizeMd: 16,
   fontSizeLg: 18,
+  fontSizeXl: 20,
   fontWeightMedium: '500' as const,
   fontWeightSemiBold: '600' as const,
   fontWeightBold: '700' as const,
-  textLight: '#718096',
-  textColor: '#2d3748'
 };
 
 const ProductList: React.FC<ProductListProps> = ({
   products,
   onAddToCart,
   onProductPress,
+  forcedTheme,
 }) => {
+  const systemColorScheme = useColorScheme();
+  const isDark = forcedTheme ? forcedTheme === 'dark' : systemColorScheme === 'dark';
+  const theme = isDark ? darkTheme : lightTheme;
+
   const renderStars = (rating: number) => {
     const stars = [];
     const fullStars = Math.floor(rating);
@@ -67,18 +102,23 @@ const ProductList: React.FC<ProductListProps> = ({
 
     for (let i = 0; i < fullStars; i++) {
       stars.push(
-        <Ionicons key={i} name="star" size={12} color={colors.warning} />
+        <Ionicons key={i} name="star" size={12} color={commonColors.warning} />
       );
     }
     if (hasHalfStar) {
       stars.push(
-        <Ionicons key="half" name="star-half" size={12} color={colors.warning} />
+        <Ionicons key="half" name="star-half" size={12} color={commonColors.warning} />
       );
     }
     const remainingStars = 5 - Math.ceil(rating);
     for (let i = 0; i < remainingStars; i++) {
       stars.push(
-        <Ionicons key={`empty-${i}`} name="star-outline" size={12} color={colors.textLight} />
+        <Ionicons 
+          key={`empty-${i}`} 
+          name="star-outline" 
+          size={12} 
+          color={theme.textSecondary} 
+        />
       );
     }
     return stars;
@@ -97,25 +137,32 @@ const ProductList: React.FC<ProductListProps> = ({
         ? item.inStock
         : (typeof item.stockCount === 'number' ? item.stockCount > 0 : true);
 
+    const dynamicStyles = createDynamicStyles(theme, isDark);
+
     return (
       <TouchableOpacity
-        style={styles.productCard}
+        style={[styles.productCard, dynamicStyles.productCard]}
         onPress={() => onProductPress?.(item)}
         activeOpacity={0.8}
       >
         <LinearGradient
-          colors={['#ffffff', '#f8fafc']}
+          colors={theme.cardGradient}
           style={styles.cardGradient}
         >
           <View style={styles.imageContainer}>
             <Image source={{ uri: item.image }} style={styles.productImage} />
-            <View style={styles.categoryBadge}>
+            <View style={[styles.categoryBadge, dynamicStyles.categoryBadge]}>
               <Text style={styles.categoryText}>{item.category_name}</Text>
             </View>
+            {!isInStock && (
+              <View style={[styles.outOfStockOverlay, dynamicStyles.outOfStockOverlay]}>
+                <Text style={styles.outOfStockText}>Out of Stock</Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.productInfo}>
-            <Text style={styles.productName} numberOfLines={2}>
+            <Text style={[styles.productName, dynamicStyles.productName]} numberOfLines={2}>
               {item.name}
             </Text>
 
@@ -123,43 +170,46 @@ const ProductList: React.FC<ProductListProps> = ({
               <View style={styles.starsContainer}>
                 {renderStars(item.rating)}
               </View>
-              <Text style={styles.ratingText}>({item.rating})</Text>
+              <Text style={[styles.ratingText, dynamicStyles.ratingText]}>
+                ({item.rating})
+              </Text>
             </View>
 
-            <Text style={styles.productDescription} numberOfLines={2}>
+            <Text style={[styles.productDescription, dynamicStyles.productDescription]} numberOfLines={2}>
               {item.description}
             </Text>
 
             <View style={styles.priceContainer}>
-              <Text style={styles.price}>
+              <Text style={[styles.price, dynamicStyles.price]}>
                 ${displayPrice.toFixed(2)}
               </Text>
-              {isInStock
-                ? <Text style={styles.stockText}>In Stock</Text>
-                : <Text style={[styles.stockText, { color: colors.textLight }]}>Out of Stock</Text>
-              }
+              <View style={[styles.stockBadge, isInStock ? dynamicStyles.inStockBadge : dynamicStyles.outOfStockBadge]}>
+                <Text style={[styles.stockText, isInStock ? dynamicStyles.inStockText : dynamicStyles.outOfStockText]}>
+                  {isInStock ? 'In Stock' : 'Out of Stock'}
+                </Text>
+              </View>
             </View>
 
             <TouchableOpacity
-              onPress={(e) => {
+              onPress={e => {
                 e.stopPropagation?.();
-                if (isInStock) onAddToCart(item);
+                if (isInStock) onAddToCart({ ...item, category: item.category_name });
               }}
-              style={styles.addButton}
+              style={[styles.addButton, !isInStock && styles.disabledButton]}
               disabled={!isInStock}
             >
               <LinearGradient
-                colors={isInStock ? colors.buttonGradient : [colors.textLight, colors.textLight]}
+                colors={isInStock ? commonColors.gradient : [theme.textSecondary, theme.textSecondary]}
                 style={styles.addButtonGradient}
               >
                 <Ionicons
-                  name="cart"
+                  name={isInStock ? "cart" : "ban"}
                   size={16}
                   color="white"
                   style={styles.cartIcon}
                 />
                 <Text style={styles.addButtonText}>
-                  {isInStock ? 'Add' : 'Out of Stock'}
+                  {isInStock ? 'Add to Cart' : 'Unavailable'}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -169,8 +219,10 @@ const ProductList: React.FC<ProductListProps> = ({
     );
   };
 
+  const dynamicStyles = createDynamicStyles(theme, isDark);
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, dynamicStyles.container]}>
       <FlatList
         data={products}
         renderItem={renderProduct}
@@ -184,31 +236,74 @@ const ProductList: React.FC<ProductListProps> = ({
   );
 };
 
+const createDynamicStyles = (theme: typeof lightTheme, isDark: boolean) => StyleSheet.create({
+  container: {
+    backgroundColor: theme.background,
+  },
+  productCard: {
+    backgroundColor: theme.cardBackground,
+    borderWidth: 1,
+    borderColor: theme.border,
+    ...theme.shadow,
+  },
+  categoryBadge: {
+    backgroundColor: isDark ? commonColors.primary : commonColors.primary,
+    shadowColor: isDark ? commonColors.primary : 'transparent',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0.3 : 0,
+    shadowRadius: 4,
+  },
+  outOfStockOverlay: {
+    backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.9)',
+  },
+  productName: {
+    color: theme.textPrimary,
+  },
+  ratingText: {
+    color: theme.textSecondary,
+  },
+  productDescription: {
+    color: theme.textSecondary,
+  },
+  price: {
+    color: commonColors.primary,
+  },
+  inStockBadge: {
+    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
+    borderColor: commonColors.success,
+  },
+  outOfStockBadge: {
+    backgroundColor: isDark ? 'rgba(220, 38, 38, 0.2)' : 'rgba(220, 38, 38, 0.1)',
+    borderColor: commonColors.red,
+  },
+  inStockText: {
+    color: commonColors.success,
+  },
+  outOfStockText: {
+    color: commonColors.red,
+  },
+});
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
   },
   listContainer: {
-    padding: colors.spacingMd,
+    padding: commonColors.spacingMd,
+    paddingBottom: commonColors.spacingLg,
   },
   row: {
     justifyContent: 'space-between',
-    marginBottom: colors.spacingMd,
+    marginBottom: commonColors.spacingMd,
   },
   productCard: {
     width: itemWidth,
-    borderRadius: colors.borderRadiusLarge,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    backgroundColor: '#fff',
-    marginBottom: colors.spacingMd,
+    borderRadius: commonColors.borderRadiusLarge,
+    marginBottom: commonColors.spacingMd,
+    overflow: 'hidden',
   },
   cardGradient: {
-    borderRadius: colors.borderRadiusLarge,
+    borderRadius: commonColors.borderRadiusLarge,
     overflow: 'hidden',
   },
   imageContainer: {
@@ -222,82 +317,101 @@ const styles = StyleSheet.create({
   },
   categoryBadge: {
     position: 'absolute',
-    top: colors.spacingSm,
-    left: colors.spacingSm,
-    backgroundColor: colors.primary,
-    paddingHorizontal: colors.spacingSm,
-    paddingVertical: colors.spacingXs,
-    borderRadius: colors.spacingXs,
+    top: commonColors.spacingSm,
+    left: commonColors.spacingSm,
+    paddingHorizontal: commonColors.spacingSm,
+    paddingVertical: commonColors.spacingXs,
+    borderRadius: commonColors.borderRadiusSmall,
   },
   categoryText: {
     color: 'white',
-    fontSize: colors.fontSizeXs,
-    fontWeight: colors.fontWeightSemiBold,
+    fontSize: commonColors.fontSizeXs,
+    fontWeight: commonColors.fontWeightSemiBold,
+  },
+  outOfStockOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: commonColors.borderRadiusLarge,
+  },
+  outOfStockText: {
+    color: '#dc2626',
+    fontSize: commonColors.fontSizeMd,
+    fontWeight: commonColors.fontWeightBold,
+    textAlign: 'center',
   },
   productInfo: {
-    padding: colors.spacingMd,
+    padding: commonColors.spacingMd,
   },
   productName: {
-    fontSize: colors.fontSizeMd,
-    fontWeight: colors.fontWeightBold,
-    color: colors.textColor,
-    marginBottom: colors.spacingSm,
+    fontSize: commonColors.fontSizeMd,
+    fontWeight: commonColors.fontWeightBold,
+    marginBottom: commonColors.spacingSm,
     lineHeight: 20,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: colors.spacingSm,
+    marginBottom: commonColors.spacingSm,
   },
   starsContainer: {
     flexDirection: 'row',
-    marginRight: colors.spacingXs,
+    marginRight: commonColors.spacingXs,
   },
   ratingText: {
-    fontSize: colors.fontSizeXs,
-    color: colors.textLight,
-    fontWeight: colors.fontWeightMedium,
+    fontSize: commonColors.fontSizeXs,
+    fontWeight: commonColors.fontWeightMedium,
   },
   productDescription: {
-    fontSize: colors.fontSizeSm,
-    color: colors.textLight,
-    marginBottom: colors.spacingMd,
+    fontSize: commonColors.fontSizeSm,
+    marginBottom: commonColors.spacingMd,
     lineHeight: 18,
   },
   priceContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: colors.spacingMd,
+    marginBottom: commonColors.spacingMd,
   },
   price: {
-    fontSize: colors.fontSizeLg,
-    fontWeight: colors.fontWeightBold,
-    color: colors.primary,
+    fontSize: commonColors.fontSizeLg,
+    fontWeight: commonColors.fontWeightBold,
+  },
+  stockBadge: {
+    paddingHorizontal: commonColors.spacingSm,
+    paddingVertical: commonColors.spacingXs,
+    borderRadius: commonColors.borderRadiusSmall,
+    borderWidth: 1,
   },
   stockText: {
-    fontSize: colors.fontSizeXs,
-    color: colors.primary,
-    fontWeight: colors.fontWeightSemiBold,
+    fontSize: commonColors.fontSizeXs,
+    fontWeight: commonColors.fontWeightSemiBold,
   },
   addButton: {
-    borderRadius: colors.borderRadiusLarge,
+    borderRadius: commonColors.borderRadiusMedium,
     overflow: 'hidden',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   addButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: colors.spacingSm,
-    paddingHorizontal: colors.spacingMd,
+    paddingVertical: commonColors.spacingMd,
+    paddingHorizontal: commonColors.spacingMd,
   },
   cartIcon: {
-    marginRight: colors.spacingXs,
+    marginRight: commonColors.spacingXs,
   },
   addButtonText: {
     color: 'white',
-    fontSize: colors.fontSizeSm,
-    fontWeight: colors.fontWeightSemiBold,
+    fontSize: commonColors.fontSizeSm,
+    fontWeight: commonColors.fontWeightSemiBold,
   },
 });
 
